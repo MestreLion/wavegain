@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>WaveGain v1.3.1</TITLE>
+</HEAD>
+<BODY>
+<H1>WaveGain v1.3.1</H2>
+<P>
+WaveGain is an application of the ReplayGain algorithms to standard PCM wave
+files. Calculated gain adjustments are applied directly to the audio data,
+instead of just writing metadata as traditionally done for other formats
+like MP3, FLAC and Ogg Vorbis.
+<P>
+The replaygain values can also be added as metadata in a custom RIFF chunk named
+'gain'. This could theoretically allow WAV files to have same lossless
+functionality as other formats where audio data is not altered. But since no
+current players are aware of this "standard" the metadata is used only by
+WaveGain, for the "undo" feature.
+<P>
+Therefore, in the strictest meaning of the word, this process is NOT lossless.
+However, with the application of dithering to the output, the losses can be
+minimized and are, in any event, unlikely to be audible to the human ear.
+<P>
+So in simple terms, the program reads in wave files, analyses them, calculates
+and displays recommended gain adjustments (track and album), and then applies
+the adjustments directly to the wave data, if requested.
+
+<H2>Usage</H2>
+
+<B>wavegain</B> [<I>OPTIONS</I>] <I>FILE...</I>
+<BR>
+<B>wavegain</B> [<I>OPTIONS</I>] <I>FILE...</I> [-e CMD [ARG...]] <I>(Windows only)</I>
+
+<H2>Options</H2>
+
+<P>
+<DL COMPACT>
+<DT><B>-h, --help</B>
+
+<DD>
+Print the help information.
+<P>
+<P>
+<DT><B>-c, --calculate</B>
+
+<DD>
+Calculate and print gain settings and DC Offsets, but not do not apply them
+(DEFAULT)
+<P>
+<P>
+<DT><B>-s, --fast</B>
+
+<DD>
+Similar to --calculate, but only only analyzes 8,192,000 samples per file.
+Results will not be as accurate as a full analysis but with most material will
+be within +/- 0.5db.
+<BR>
+
+DC Offset will not be calculated.
+<P>
+<DT><B>-y, --apply</B>
+
+<DD>
+Calculates and applies gain settings and DC Offset correction.
+<P>
+<P>
+<DT><B>-r, --radio</B>
+
+<DD>
+When used with --apply, use ReplayGain Radio/Single Track gain setting (DEFAULT)
+<P>
+Analyses the ReplayGain values for each of the tracks (files) specified on an
+individual basis.
+<P>
+<P>
+<DT><B>-a, --album</B>
+
+<DD>
+When used with --apply, use ReplayGain Album/Audiophile gain setting.
+<P>
+Analyses the ReplayGain values for each of the tracks (files) specified and
+collectively for the whole selection. The album gain value, if applied, ensures
+that all tracks are adjusted by the same scaling factor and so retain the same
+relative level of loudness.
+<P>
+<P>
+<DT><B>-q, --adc</B>
+
+<DD>
+When used with --apply, apply Album-based DC Offset correction.
+The default is to apply Track-based DC Offset correction.
+<P>
+<P>
+<DT><B>-p, --no_offset</B>
+
+<DD>
+Do not apply any DC Offset correction.
+<P>
+<P>
+<DT><B>-x, --scale</B>
+
+<DD>
+Write scale values to stdout in the format: n.nnnnnn
+<BR>In Album mode it only writes the Album Scale value, and
+in Title mode it only writes the Title Scale values.
+<BR>Only works with --calculate (calculation-only mode)
+<P>
+<P>
+<DT><B>-w, --write</B>
+
+<DD>
+When used with --apply, additionally write a 'gain' chunk into the Wave Header,
+storing the scalefactor applied to the wave data as a double floating point number.
+<BR>
+
+This header is required for the '--undo-gain' feature, and its presence will
+also will also skip future re-processing of the affected file(s), unless '--force' is used.
+<P>
+<P>
+<DT><B>--force</B>
+
+<DD>
+Force the reprocessing of a file even if it contains a that contains a 'gain' chunk
+(previously created using --write)
+<P>
+<P>
+<DT><B>--undo-gain</B>
+
+<DD>
+Read the scalefactor in the 'gain' chunk and uses the value to reverse the
+previously applied gain. This will not recreate a bit identical version of the
+original file, but it will be rescaled to the original level.
+<P>
+<P>
+<DT><B>-z, --recursive</B>
+
+<DD>
+Search for files recursively, treating each folder as a distinct <I>album</I>
+<P>
+<P>
+<DT><B>-l, --log</B>
+
+<DD>
+Write a log file. (Default filename = WGLog.txt)
+<P>
+<P>
+<DT><B>-f, --logfile</B>
+
+<DD>
+Specify log filename. Assumes --log
+<P>
+<P>
+<DT><B>-n, --noclip</B>
+
+<DD>
+Do not prevent clipping. The default is to prevent clipping.
+<P>
+<P>
+<DT><B>-d</B><I>x</I><B>, --dither=</B><I>x</I>
+
+<DD>
+Dither output, where <I>x</I> is:
+
+<BR><B>0</B> for dither OFF (default).
+<BR><B>1</B> for dither without Noise Shaping.
+<BR><B>2</B> for dither with Light  Noise Shaping.
+<BR><B>3</B> for dither with Medium Noise Shaping.
+<BR><B>4</B> for dither with Heavy  Noise Shaping.
+<P>
+Whenever the values of samples are altered, it is advisable, as a final stage before writing out, to apply <I>dithering</I> to the amended values. This process aids in preserving information in the low order bits that would otherwise be lost. In some cases, the application of <I>noise shaping</I> also aids this process. (I am not including any detail of the <I>whys/wherefores</I> or <I>hows</I> here as there are sources of information on the web that cover these far more eloquently and capably than I would be able to provide!) If the output is to be used for subsequent processing such as encoding to a lossy format, then dithering is not recommended. If dithering is applied, it should be in the last stage of processing.
+<P>
+<DT><B>-t, --limiter</B>
+
+<DD>
+Apply 6dB Hard Limiter to output.
+<P>
+This option would normally be expected to be used in conjunction with --gain, when an increase in the recommended gain is required. 
+<P>
+<DT><B>-g</B><I>x</I><B>, --gain=</B><I>x</I>
+
+<DD>
+Apply additional Manual Gain adjustment in decibels, where <I>x</I> is any floating point number between <B>-20.0</B> and <B>+12.0</B>
+<BR>
+Clipping Prevention will be applied by default unless --noclip is used.
+<P>
+Normally used in conjunction with the --limiter when an increase in gain is to be applied. This gain figure below is added to the value recommended by the ReplayGain calculation. Where an increase in gain is required, application of the hard limiter provides a smooth compression of the peaks and troughs rather than simply applying a crude hard cutoff at full peak scale.
+<BR><img src="image001.png">
+<P>
+<P>
+
+<DT><B>-o, --stdout</B>
+
+<DD>
+Write output file to stdout.
+<P>
+<DT><B>-b<I>x</I>, --bits=<I>x</I></B>
+
+<DD>
+Set output sample format, where <I><B>x</B></I> is:
+
+<BR><B>1</B> for  8-bit unsigned PCM data.
+<BR><B>2</B> for 16-bit signed PCM data
+<BR><B>3</B> for 24-bit signed PCM data.
+<BR><B>4</B> for 32-bit signed PCM data.
+<BR><B>5</B> for 32-bit floats.
+<BR><B>6</B> for 16-bit 'aiff' format.
+<P>
+By default, the output file will be of the same bitwidth and type as the input file.
+<P>
+<P>
+
+<DT><B>-e, --exec <I>Cmd [Args]</I></B> <I>(Windows only)</I>
+<DD>
+Execute a command after WaveGain.
+The following environment variables are available:
+INPUT_FILE, INPUT_FDIR, INPUT_RDIR, INPUT_NAME,
+TRACK_GAIN, TRACK_PEAK, TRACK_SCALE, TRACK_NEW_PEAK,
+ALBUM_GAIN, ALBUM_PEAK, ALBUM_SCALE, ALBUM_NEW_PEAK,
+DC_OFFSET_L, DC_OFFSET_R.
+
+</DL>
+
+<H2>Input Files</H2>
+
+WaveGain input files may be 8, 16, 24 or 32 bit integer, or floating point
+wave files with 1 or 2 channels and a sample rate of 96000Hz, 88200Hz,
+64000Hz, 48000Hz, 44100Hz, 32000Hz, 24000Hz, 22050Hz, 16000Hz, 12000Hz,
+11025Hz or 8000Hz. 16 bit integer 'aiff' files are also supported.
+<P>
+Use '-' as filename for stdin input.
+<P>
+</BODY>
+</HTML>
