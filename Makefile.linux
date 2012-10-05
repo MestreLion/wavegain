@@ -1,0 +1,9 @@
+all:
+	gcc *.c -o wavegain -DHAVE_CONFIG_H -lm -lsndfile
+
+install:
+	install -d /usr/bin/
+	install -m 0755 wavegain /usr/bin/
+
+clean:
+	rm -Rf wavegain *.o

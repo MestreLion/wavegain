@@ -1,0 +1,27 @@
+wavegain (1.2.6-0rarewares1) unstable; urgency=low
+
+  * Upstream Release.
+  * Thanx john33!
+
+ -- mike gan <xmixahlx@yahoo.com>  Mon, 22 Nov 2005 00:00:00 -0800
+
+wavegain (1.2.5-0.1) unstable; urgency=low
+
+  * Upstream Release.
+  * -0.1 erm... actually fix it
+
+ -- mike gan <xmixahlx@yahoo.com>  Thu,  3 Oct 2005 23:00:00 -0700
+
+wavegain (1.2.1-0.1) unstable; urgency=low
+
+  * Upstream Release.
+  * -0.1 changes build environment
+
+ -- mike gan <xmixahlx@yahoo.com>  Thu, 14 Apr 2005 00:00:00 -0700
+
+wavegain (1.0.4-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- mike gan <xmixahlx@yahoo.com>  Sat, 15 May 2004 14:04:39 -0700
+
