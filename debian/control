@@ -1,0 +1,31 @@
+Source: wavegain
+Section: sound
+Priority: extra
+Maintainer: Rodrigo Silva <linux@rodrigosilva.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.3
+Homepage: http://www.rarewares.org/others.php
+Vcs-Git: git://github.com/MestreLion/wavegain.git
+Vcs-Browser: https://github.com/MestreLion/wavegain
+
+Package: wavegain
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Replaygain for wav audio files
+ WaveGain is an application of the ReplayGain algorithms to standard PCM wave
+ files. Calculated gain adjustments are applied directly to the audio data,
+ instead of just writing metadata as traditionally done for other formats
+ like MP3, FLAC and Ogg Vorbis.
+ .
+ Replaygain is a standard that allows compatible players to play audio files
+ with an adjusted volume gain so they have a consistent perceived loudness.
+ .
+ Loudness can be averaged either for each individual file, also called "Track"
+ or "Radio" mode, where every song is adjusted to the same standard loudness; or
+ by group, also called "Album" mode, where individual "songs" may sound louder
+ or quieter than others, but each "album" as a whole has the same average
+ loudness as other albums.
+ .
+ For more information,
+ <http://en.wikipedia.org/wiki/ReplayGain>
+ <http://wiki.hydrogenaudio.org/index.php?title=Replaygain>

@@ -1,0 +1,23 @@
+wavegain for Debian
+-------------------
+
+Pristine upstream archive downloaded from:
+http://www.rarewares.org/files/others/wavegain-1.3.1srcs.zip
+
+72180 bytes, 2011-12-19 07:00
+
+MD5Sum:
+456106bae00cec2ec4024da992bc5fd0
+
+Given the zip format, it had to be repacked to a tar.gz tarball
+
+Steps to reproduce the re-packaging:
+
+$ version=1.3.1
+$ wget "http://www.rarewares.org/files/others/wavegain-${version}srcs.zip"
+$ unzip wavegain-${version}srcs.zip
+$ mv WaveGain-${version} wavegain-${version}
+$ tar -czf wavegain_${version}.orig.tar.gz wavegain-${version}
+
+Result using tar (GNU tar) 1.26
+2d0585e9442741a2796655ee6a74119e wavegain_1.3.1.orig.tar.gz # 65174 bytes
