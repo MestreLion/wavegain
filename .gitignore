@@ -1,0 +1,7 @@
+wavegain
+debian/*.debhelper.log
+debian/*.substvars
+debian/files
+debian/wavegain/
+.*
+!.gitignore
