@@ -44,7 +44,7 @@
 #define MAX_PATH 512
 #endif
 
-int	      write_log = 0;
+int	      write_to_log = 0;
 char          log_file_name[MAX_PATH];
 extern double total_samples;
 extern double total_files;
@@ -68,7 +68,6 @@ static FILE_LIST* alloc_node(const char* file)
 
 	if (node != NULL) {
 		node->filename = strdup(file);
-//		node->filename = _strdup(file);
 
 		if (node->filename != NULL) {
 			node->track_peak = NO_PEAK;
@@ -142,7 +141,7 @@ void free_list(FILE_LIST* list)
 }
 
 static char s_floatToAscii[256];
-const char* ftos(float f, const char* format)
+const char* ftos(double f, const char* format)
 {
 	sprintf(s_floatToAscii, format, f);
 	return s_floatToAscii;
@@ -162,13 +161,12 @@ const char* ftos(float f, const char* format)
 int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
 {
 	FILE_LIST* file;
-	float      factor_clip,
-	           audiophile_gain;
-	double     Gain,
+	double     factor_clip,
+	           audiophile_gain,
+	           Gain,
 	           scale,
 	           dB,
 	           album_dc_offset[2] = {0., 0.};
-	int        need_to_process = 0;
 
 	settings->album_peak = NO_PEAK;
 
@@ -177,105 +175,126 @@ int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
 
 	settings->first_file = 1;
 
-	/* Analyze the files */
-	for (file = file_list; file; file = file->next_file) {
-		if (file->filename == '\0')
-			continue;
-
-		if (!get_gain(file->filename, &file->track_peak, &file->track_gain,
-		              file->dc_offset, file->offset, settings)) {
-			file->filename = 0;
-			continue;
-		}
-		if (file->dc_offset[0] * 32768 <= -1.0 || file->dc_offset[0] * 32768 >= 1.0 ||
-		    file->dc_offset[1] * 32768 <= -1.0 || file->dc_offset[1] * 32768 >= 1.0)
-			need_to_process = 1;
-		album_dc_offset[0] += file->offset[0];
-		album_dc_offset[1] += file->offset[1];
-	}
-
-	album_dc_offset[0] /= total_samples;
-	album_dc_offset[1] /= total_samples;
-
-	if (!settings->no_offset && settings->adc) {
-		int dc_l = (int)(album_dc_offset[0] * 32768 * -1);
-		int dc_r = (int)(album_dc_offset[1] * 32768 * -1);
-		fprintf(stderr, " ********************* Album DC Offset | %4d  |  %4d  | ***************\n",
-			dc_l, dc_r);
-		if(write_log) {
-			log_error(" ********************* Album DC Offset | %4d  |  %4d  | ***************\n",
-				dc_l, dc_r);
-		}
-	}
-
-	fprintf(stderr, "\n");
-	if(write_log)
-		log_error("\n");
-
-	if (settings->audiophile) {
-		Gain = GetAlbumGain() + settings->man_gain;
-		scale = (float) pow(10., Gain * 0.05);
-		settings->set_album_gain = 0;
-		if(settings->clip_prev) {
-			factor_clip  = (float) (32767./( settings->album_peak + 1));
-			if(scale < factor_clip)
-				factor_clip = 1.f;
-			else
-				factor_clip /= (float)scale;
-			scale *= factor_clip;
-		}
-		if (settings->scale) {
-			fprintf(stdout, "%8.6lf", scale);
-		}
-
-		dB = 20. * log10(scale);
-		audiophile_gain = (float) dB;
-		if (audiophile_gain < 0.01 && audiophile_gain > -0.01 && !need_to_process) {
-			fprintf(stderr, " No Album Gain adjustment or DC Offset correction required, exiting.\n");
-			if(write_log)
-				log_error(" No Album Gain adjustment or DC Offset correction required, exiting.\n");
-			settings->set_album_gain = 1;
-		}
-		else {
-			fprintf(stderr, " Recommended Album Gain: %+6.2f dB\tScale: %6.4f\n\n", audiophile_gain, scale);
-			if(write_log)
-				log_error(" Recommended Album Gain: %+6.2f dB\tScale: %6.4f\n\n", audiophile_gain, scale);
-		}
-	}
-      
-	if(settings->apply_gain) {	/* Write radio and audiophile gains. */
-		total_files = 0.0;
+	/* Undo previously applied gain */
+	if (settings->undo) {
 		for (file = file_list; file; file = file->next_file) {
-			if (settings->audiophile && settings->set_album_gain == 1)
-				break;
-			if (settings->radio && (file->track_gain < 0.01 && file->track_gain > -0.01) && !need_to_process) {
-				fprintf(stderr, " No Title Gain adjustment or DC Offset correction required for file: %s, skipping.\n", file->filename);
-				if(write_log)
-					log_error(" No Title Gain adjustment or DC Offset correction required for file: %s, skipping.\n", file->filename);
+			if (file->filename == '\0')
+				continue;
+			if (!write_gains(file->filename, 0, 0, 0, 0, 0, settings)) {
+				fprintf(stderr, " Error processing GAIN for file - %s\n", file->filename);
+				continue;
 			}
-			else if (!write_gains(file->filename, file->track_gain,	audiophile_gain, file->track_peak, 
-					      file->dc_offset, album_dc_offset, settings)) {
-					fprintf(stderr, " Error processing GAIN for file - %s\n", file->filename);
+		}
+	}
+	else {
+		/* Analyze the files */
+		for (file = file_list; file; file = file->next_file) {
+			int dc_l;
+			int dc_r;
+			if (file->filename == '\0')
+				continue;
+
+			if (!get_gain(file->filename, &file->track_peak, &file->track_gain,
+			              file->dc_offset, file->offset, settings)) {
+				file->filename = '\0';
+				continue;
+			}
+			dc_l = (int)(file->dc_offset[0] * 32768 * -1);
+			dc_r = (int)(file->dc_offset[1] * 32768 * -1);
+			if (dc_l < -1 || dc_l > 1 || dc_r < -1 || dc_r > 1)
+				settings->need_to_process = 1;
+			album_dc_offset[0] += file->offset[0];
+			album_dc_offset[1] += file->offset[1];
+		}
+
+		album_dc_offset[0] /= total_samples;
+		album_dc_offset[1] /= total_samples;
+
+		if (!settings->no_offset && settings->adc) {
+			int dc_l = (int)(album_dc_offset[0] * 32768 * -1);
+			int dc_r = (int)(album_dc_offset[1] * 32768 * -1);
+			fprintf(stderr, " ********************* Album DC Offset | %4d  |  %4d  | ***************\n",
+				dc_l, dc_r);
+			if(write_to_log) {
+				write_log(" ********************* Album DC Offset | %4d  |  %4d  | ***************\n",
+					dc_l, dc_r);
+			}
+		}
+
+		fprintf(stderr, "\n");
+		if(write_to_log)
+			write_log("\n");
+
+		if (settings->audiophile) {
+			Gain = GetAlbumGain() + settings->man_gain;
+			scale = pow(10., Gain * 0.05);
+			settings->set_album_gain = 0;
+			if(settings->clip_prev) {
+				factor_clip  = (32767./( settings->album_peak + 1));
+				if(scale < factor_clip)
+					factor_clip = 1.0;
+				else
+					factor_clip /= scale;
+				scale *= factor_clip;
+			}
+			if (settings->scale) {
+				fprintf(stdout, "%8.6lf", scale);
+			}
+
+			if (scale > 0.0)
+				dB = 20. * log10(scale);
+			else
+				dB = 0.0;
+			audiophile_gain = dB;
+			if (audiophile_gain < 0.1 && audiophile_gain > -0.1 && !settings->need_to_process) {
+				fprintf(stderr, " No Album Gain adjustment or DC Offset correction required, exiting.\n");
+				if(write_to_log)
+					write_log(" No Album Gain adjustment or DC Offset correction required, exiting.\n");
+				settings->set_album_gain = 1;
+			}
+			else {
+				fprintf(stderr, " Recommended Album Gain: %+6.2f dB\tScale: %6.4f\n\n", audiophile_gain, scale);
+				if(write_to_log)
+					write_log(" Recommended Album Gain: %+6.2f dB\tScale: %6.4f\n\n", audiophile_gain, scale);
+			}
+		}
+
+		if(settings->apply_gain) {	/* Write radio and audiophile gains. */
+			total_files = 0.0;
+			for (file = file_list; file; file = file->next_file) {
+				if (file->filename == '\0')
 					continue;
+				if (settings->audiophile && settings->set_album_gain == 1)
+					break;
+				if (settings->radio && (file->track_gain < 0.1 && file->track_gain > -0.1) && !settings->need_to_process) {
+					fprintf(stderr, " No Title Gain adjustment or DC Offset correction required for file: %s, skipping.\n", file->filename);
+					if(write_to_log)
+						write_log(" No Title Gain adjustment or DC Offset correction required for file: %s, skipping.\n", file->filename);
+				}
+				else if (!write_gains(file->filename, file->track_gain,	audiophile_gain, file->track_peak, 
+						      file->dc_offset, album_dc_offset, settings)) {
+						fprintf(stderr, " Error processing GAIN for file - %s\n", file->filename);
+						continue;
+				}
 			}
 		}
 	}
 
 	fprintf(stderr, "\n WaveGain Processing completed normally\n");
-	if(write_log)
-		log_error("\n WaveGain Processing completed normally\n\n");
+	if(write_to_log)
+		write_log("\n WaveGain Processing completed normally\n\n");
 
 #ifdef _WIN32
 	if (settings->cmd) { 	/* execute user command */
 		FILE_LIST* file;
 		char buff[MAX_PATH];
 		char *b, *p, *q;
-		float track_scale = 1.0;
+		double track_scale = 1.0;
 
-		SetEnvironmentVariable("ALBUM_GAIN", ftos(audiophile_gain, "%.2f"));
-		SetEnvironmentVariable("ALBUM_SCALE", ftos((float)scale, "%.5f"));
-		SetEnvironmentVariable("ALBUM_NEW_PEAK", ftos(settings->album_peak * (float)scale, "%.0f"));
-		SetEnvironmentVariable("ALBUM_PEAK", ftos(settings->album_peak, "%.0f"));
+		SetEnvironmentVariable("ALBUM_GAIN", ftos(audiophile_gain, "%.2lf"));
+		SetEnvironmentVariable("ALBUM_SCALE", ftos(scale, "%.5lf"));
+		SetEnvironmentVariable("ALBUM_NEW_PEAK", ftos(settings->album_peak * scale, "%.0lf"));
+		SetEnvironmentVariable("ALBUM_PEAK", ftos(settings->album_peak, "%.0lf"));
 
 		for (file = file_list; file; file = file->next_file) {
 			if (file->filename == '\0')
@@ -303,14 +322,14 @@ int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
 			if (q) q[0] = '\0';
 			SetEnvironmentVariable("INPUT_NAME", p);
 
-			track_scale = (float)(pow(10., file->track_gain * 0.05));
-			SetEnvironmentVariable("TRACK_SCALE", ftos(track_scale, "%.5f"));
-			SetEnvironmentVariable("TRACK_GAIN", ftos(file->track_gain, "%.2f"));
-			SetEnvironmentVariable("TRACK_NEW_PEAK", ftos(file->track_peak, "%.0f"));
-			SetEnvironmentVariable("TRACK_PEAK", ftos(file->track_peak / track_scale, "%.0f"));
+			track_scale = (pow(10., file->track_gain * 0.05));
+			SetEnvironmentVariable("TRACK_SCALE", ftos(track_scale, "%.5lf"));
+			SetEnvironmentVariable("TRACK_GAIN", ftos(file->track_gain, "%.2lf"));
+			SetEnvironmentVariable("TRACK_NEW_PEAK", ftos(file->track_peak, "%.0lf"));
+			SetEnvironmentVariable("TRACK_PEAK", ftos(file->track_peak / track_scale, "%.0lf"));
 
-			SetEnvironmentVariable("DC_OFFSET_L", ftos((int)(file->dc_offset[0]*(-32768)), "%.0f"));
-			SetEnvironmentVariable("DC_OFFSET_R", ftos((int)(file->dc_offset[1]*(-32768)), "%.0f"));
+			SetEnvironmentVariable("DC_OFFSET_L", ftos((int)(file->dc_offset[0]*(-32768)), "%.0lf"));
+			SetEnvironmentVariable("DC_OFFSET_R", ftos((int)(file->dc_offset[1]*(-32768)), "%.0lf"));
 
 			fprintf(stderr, "\n Executing command on \"%s\":\n\n", file->filename);
 			system(settings->cmd);
@@ -350,6 +369,19 @@ static void usage(void)
 	fprintf(stdout, "                   ONLY works in Calculation mode.\n");
 	fprintf(stdout, "  -y, --apply      Calculates and APPLIES gain settings, and applies\n");
 	fprintf(stdout, "                   DC Offset correction.\n");
+	fprintf(stdout, "  -w, --write      Writes a 'gain' chunk into the Wave Header.\n");
+	fprintf(stdout, "                   Stores the scalefactor applied to the wave data as a\n");
+	fprintf(stdout, "                   double floating point number. Only written when gain\n");
+	fprintf(stdout, "                   is applied. Presence will result in file being skipped\n");
+	fprintf(stdout, "                   if reprocessed.\n");
+	fprintf(stdout, "                   (Unless '--force' or '--undo-gain' are specified.)\n");
+	fprintf(stdout, "      --force      Forces the reprocessing of a file that contains a 'gain'\n");
+	fprintf(stdout, "                   chunk and will result in the new scalefactor overwriting\n");
+	fprintf(stdout, "                   the existing value.\n");
+	fprintf(stdout, "      --undo-gain  Reads the scalefactor in the 'gain' chunk and uses the\n");
+	fprintf(stdout, "                   value to reverse the previously applied gain. This will NOT\n");
+	fprintf(stdout, "                   recreate a bit identical version of the original file, but\n");
+	fprintf(stdout, "                   it will be rescaled to the original level.\n");
 #ifdef ENABLE_RECURSIVE
 	fprintf(stdout, "  -z, --recursive  Search for files recursively, each folder as an album\n");
 #endif
@@ -413,6 +445,9 @@ const static struct option long_options[] = {
 	{"calculate",	0, NULL, 'c'},
 	{"scale",	0, NULL, 'x'},
 	{"apply",	0, NULL, 'y'},
+	{"write",	0, NULL, 'w'},
+	{"force",	0, NULL,  0 },
+	{"undo-gain",	0, NULL,  0 },
 	{"fast",	0, NULL, 's'},
 	{"stdout",	0, NULL, 'o'},
 #ifdef ENABLE_RECURSIVE
@@ -433,9 +468,9 @@ const static struct option long_options[] = {
 
 
 #ifdef ENABLE_RECURSIVE
-#define ARG_STRING "harqpcxysozlf:nd:tg:b:e:"
+#define ARG_STRING "harqpcxywsozlf:nd:tg:b:e:"
 #else
-#define ARG_STRING "harqpcxysolf:nd:tg:b:e:"
+#define ARG_STRING "harqpcxywsolf:nd:tg:b:e:"
 #endif
 
 
@@ -452,6 +487,7 @@ int main(int argc, char** argv)
 
 	memset(&settings, 0, sizeof(settings));
 	settings.first_file = 1;
+	settings.radio = 1;
 	settings.clip_prev = 1;
 	settings.outbitwidth = 16;
 	settings.format = WAV_NO_FMT;
@@ -470,8 +506,16 @@ int main(int argc, char** argv)
 	while ((ret = getopt_long(argc, argv, ARG_STRING, long_options, &option_index)) != -1) {
 		switch(ret) {
 			case 0:
-				fprintf(stderr, "Internal error parsing command line options\n");
-				exit(1);
+				if (!strcmp(long_options[option_index].name, "force")) {
+					settings.force = 1;
+				}
+				else if (!strcmp(long_options[option_index].name, "undo-gain")) {
+					settings.undo = 1;
+				}
+				else {
+					fprintf(stderr, "Internal error parsing command line options\n");
+					exit(1);
+				}
 				break;
 			case 'h':
 				usage();
@@ -499,6 +543,9 @@ int main(int argc, char** argv)
 				settings.apply_gain = 1;
 				settings.scale = 0;
 				break;
+			case 'w':
+				settings.write_chunk = 1;
+				break;
 			case 's':
 				settings.fast = 1;
 				break;
@@ -511,7 +558,7 @@ int main(int argc, char** argv)
 				break;
 #endif
 			case 'l':
-				write_log = 1;
+				write_to_log = 1;
 #ifdef _WIN32
 				strcpy(log_file_name, CmdDir);
 				strcat(log_file_name, LOG_NAME);
@@ -520,13 +567,14 @@ int main(int argc, char** argv)
 #endif
 				break;
 			case 'f':
-				write_log = 1;
+				write_to_log = 1;
 				strcpy(log_file_name, optarg);
 				break;
 			case 'n':
 				settings.clip_prev = 0;
 				break;
 			case 'd':
+				settings.need_to_process = 1;
 				settings.dithering = 1;
    				if(sscanf(optarg, "%d", &settings.shapingtype) != 1) {
 	    				fprintf(stderr, "Warning: dither type %s not recognised, using default\n", optarg);
@@ -547,7 +595,7 @@ int main(int argc, char** argv)
 				settings.limiter = 1;
 				break;
 			case 'g':
-   				if(sscanf(optarg, "%f", &settings.man_gain) != 1) {
+   				if(sscanf(optarg, "%lf", &settings.man_gain) != 1) {
 	    				fprintf(stderr, "Warning: manual gain %s not recognised, ignoring\n", optarg);
 					break;
 				}
@@ -563,6 +611,7 @@ int main(int argc, char** argv)
 				}
 				break;
 			case 'b':
+				settings.need_to_process = 1;
    				if(sscanf(optarg, "%d", &bits) != 1) {
 	    				fprintf(stderr, "Warning: output format %s not recognised, using default\n", optarg);
 		    			break;
@@ -634,7 +683,10 @@ int main(int argc, char** argv)
 #endif
 		}
 	}
-
+	if (settings.undo == 1) {
+		settings.write_chunk = 0;
+		settings.no_offset = 1;
+	}
 
 	if (optind >= argc) {
 		fprintf(stderr, _("No files specified.\n"));
@@ -642,15 +694,15 @@ int main(int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	if (write_log) {
-		log_error("Command line:\n\t");
+	if (write_to_log) {
+		write_log("Command line:\n\t");
 		for(i = 0; i < argc; i++)
-			log_error("%s ",  argv[i]);
-		log_error("\n");
+			write_log("%s ",  argv[i]);
+		write_log("\n");
 	}
 
 	if (!strcmp(argv[optind], "-")) {
-		float track_peak, track_gain;
+		double track_peak, track_gain;
 		double dc_offset;
 		double offset;
 		if (!get_gain("-", &track_peak, &track_gain,

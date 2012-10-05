@@ -43,14 +43,19 @@ typedef struct
 	
 	void *readdata;
 
-	long total_samples_per_channel;
+	unsigned long total_samples_per_channel;
 	int channels;
 	long rate;
 	int samplesize;
 	int endianness;
 	int format;
+	int gain_chunk;
+	double gain_scale;
 	int std_out;
 	int apply_gain;
+	int write_chunk;
+	int force;
+	int undo;
 	int header_size;
 	unsigned char *header;
 
@@ -81,15 +86,15 @@ typedef struct {
 typedef struct {
 	short channels;
 	short samplesize;
-	long  totalsamples;
-	long  samplesread;
+	unsigned long  totalsamples;
+	unsigned long  samplesread;
 	FILE  *f;
 	short bigendian;
 } wavfile;
 
 typedef struct {
 	short channels;
-	int   totalframes;
+	unsigned long   totalframes;
 	short samplesize;
 	int   rate;
 	int   offset;
@@ -128,8 +133,8 @@ typedef struct
 	int           outputFormat;
 	FILE          *sndfile;
 	unsigned long samplerate;
-	unsigned int  bits_per_sample;
-	unsigned int  channels;
+	unsigned long bits_per_sample;
+	unsigned long channels;
 	unsigned long samples;
 	int           endianness;
 	int           format;
@@ -138,7 +143,7 @@ typedef struct
 audio_file *open_output_audio_file(char *infile, wavegain_opt *opt);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(FILE *in, audio_file *aufile, wavegain_opt *opt);
-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, unsigned int file_size);
+static int write_wav_header(audio_file *aufile, wavegain_opt *opt, __int64 file_size);
 static int write_aiff_header(audio_file *aufile);
 static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);

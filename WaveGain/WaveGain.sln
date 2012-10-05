@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WaveGain", "WaveGain.vcproj", "{519BA429-0A0D-44F3-98E0-0C47D9A45F70}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Debug|Win32.ActiveCfg = Debug|Win32
+		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Debug|Win32.Build.0 = Debug|Win32
+		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Release|Win32.ActiveCfg = Release|Win32
+		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

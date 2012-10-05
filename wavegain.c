@@ -35,7 +35,6 @@
 
 #include "gain_analysis.h"
 #include "i18n.h"
-#include "config.h"
 #include "getopt.h"
 #include "misc.h"
 #include "audio.h"
@@ -58,7 +57,7 @@
 #define ROUND64(x)   ( doubletmp = (x) + Dither.Add + (Int64_t)0x001FFFFD80000000L, *(Int64_t*)(&doubletmp) - (Int64_t)0x433FFFFD80000000L )
 #endif
 
-extern int          write_log;
+extern int          write_to_log;
 dither_t            Dither;
 double              doubletmp;
 double              total_samples;
@@ -123,20 +122,24 @@ Int64_t dither_output(int dithering, int shapingtype, int i, double Sum, int k, 
  * If an error occured, 0 is returned (a message has been printed).
  */
 
-int get_gain(const char *filename, float *track_peak, float *track_gain, 
+int get_gain(const char *filename, double *track_peak, double *track_gain, 
              double *dc_offset, double *offset, SETTINGS *settings)
 {
 	wavegain_opt *wg_opts = malloc(sizeof(wavegain_opt));
 	FILE         *infile;
 	int          result = 0;
-	float        new_peak,
-	             factor_clip;
-	double       scale,
+	double       new_peak,
+	             factor_clip,
+	             scale,
 	             peak = 0.,
 	             dB;
 	int          k, i;
 	long         chunk;
 	input_format *format;
+
+	memset(wg_opts, 0, sizeof(wavegain_opt));
+
+	wg_opts->force = settings->force;
 
 	if(!strcmp(filename, "-")) {
 		infile = stdin;
@@ -161,7 +164,13 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 	format = open_audio_file(infile, wg_opts);
 	if (!format) {
 		/* error reported by reader */
-		fprintf (stderr, " Unrecognized file format for %s.\n", filename) ;
+		fprintf (stderr, " Unrecognized file format for %s.\n", filename);
+		goto exit;
+	}
+
+	if (wg_opts->gain_chunk == 1 && !wg_opts->force) {
+		fprintf (stderr, " Skipping File %s, it has already been processed.\n", filename);
+//		result = 1;
 		goto exit;
 	}
 
@@ -182,13 +191,13 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 		total_samples = (double)wg_opts->total_samples_per_channel;
 		fprintf(stderr, "\n Analyzing...\n\n");
 		fprintf(stderr, "    Gain   |  Peak  | Scale | New Peak |Left DC|Right DC| Track\n");
-		fprintf(stderr, "           |        |       |          |Offset | Offset | Track\n");
+		fprintf(stderr, "           |        |       |          |Offset | Offset |\n");
 		fprintf(stderr, " --------------------------------------------------------------\n");
-		if(write_log) {
-			log_error("\n Analyzing...\n\n");
-			log_error("    Gain   |  Peak  | Scale | New Peak |Left DC|Right DC| Track\n");
-			log_error("           |        |       |          |Offset | Offset | Track\n");
-			log_error(" --------------------------------------------------------------\n");
+		if(write_to_log) {
+			write_log("\n Analyzing...\n\n");
+			write_log("    Gain   |  Peak  | Scale | New Peak |Left DC|Right DC| Track\n");
+			write_log("           |        |       |          |Offset | Offset |\n");
+			write_log(" --------------------------------------------------------------\n");
 		}
 		settings->first_file = 0;
 	}
@@ -234,6 +243,9 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 					if (AnalyzeSamples(buffer[0], buffer[1], samples_read,
 							   wg_opts->channels) != GAIN_ANALYSIS_OK) {
 						fprintf(stderr, " Error processing samples.\n");
+						for (i = 0; i < wg_opts->channels; i++)
+							if (buffer[i]) free(buffer[i]);
+						if (buffer) free(buffer);
 						goto exit;
 					}
 				}
@@ -280,6 +292,9 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 					if (AnalyzeSamples(buffer[0], buffer[1], samples_read,
 							   wg_opts->channels) != GAIN_ANALYSIS_OK) {
 						fprintf(stderr, " Error processing samples.\n");
+						for (i = 0; i < wg_opts->channels; i++)
+							if (buffer[i]) free(buffer[i]);
+						if (buffer) free(buffer);
 						goto exit;
 					}
 				}
@@ -295,20 +310,20 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 	/*
 	 * calculate factors for ReplayGain and ClippingPrevention
 	 */
-	*track_gain = (float)(GetTitleGain() + settings->man_gain);
-	scale = (float)(pow(10., *track_gain * 0.05));
+	*track_gain = (GetTitleGain() + settings->man_gain);
+	scale = (pow(10., *track_gain * 0.05));
 	if(settings->clip_prev) {
-		factor_clip  = (float) (32767./( peak + 1));
+		factor_clip  = (32767./( peak + 1));
 		if(scale < factor_clip)
-			factor_clip = 1.f;
+			factor_clip = 1.0;
 		else
-			factor_clip /= (float)scale;
+			factor_clip /= scale;
 		scale *= factor_clip;
 	}
-	new_peak = (float) (peak * scale);
+	new_peak = (peak * scale);
 
         dB = 20. * log10(scale);
-	*track_gain = (float) dB;
+	*track_gain = dB;
 	{
 		int dc_l;
 		int dc_r;
@@ -320,17 +335,17 @@ int get_gain(const char *filename, float *track_peak, float *track_gain,
 			dc_l = (int)(dc_offset[0] * 32768 * -1);
 			dc_r = (int)(dc_offset[1] * 32768 * -1);
 		}
-		fprintf(stderr, " %+6.2f dB | %6.0f | %5.2f | %8.0f | %4d  |  %4d  | %s\n",
+		fprintf(stderr, " %+6.2lf dB | %6.0lf | %5.2lf | %8.0lf | %4d  |  %4d  | %s\n",
 			*track_gain, peak, scale, new_peak, dc_l, dc_r, filename);
-		if(write_log) {
-			log_error(" %+6.2f dB | %6.0f | %5.2f | %8.0f | %4d  |  %4d  | %s\n",
+		if(write_to_log) {
+			write_log(" %+6.2lf dB | %6.0lf | %5.2lf | %8.0lf | %4d  |  %4d  | %s\n",
 				*track_gain, peak, scale, new_peak, dc_l, dc_r, filename);
 		}
 	}
 	if (settings->scale && !settings->audiophile)
 		fprintf(stdout, "%8.6lf", scale);
 
-	settings->album_peak = settings->album_peak < peak ? (float)peak : settings->album_peak;
+	settings->album_peak = settings->album_peak < peak ? peak : settings->album_peak;
 	*track_peak = new_peak;
 	result = 1;
 
@@ -349,7 +364,7 @@ exit:
  * If audiophile_gain is selected, that value is used, otherwise the
  * radio_gain value is used.
  */
-int write_gains(const char *filename, float radio_gain, float audiophile_gain, float TitlePeak, 
+int write_gains(const char *filename, double radio_gain, double audiophile_gain, double TitlePeak, 
                 double *dc_offset, double *album_dc_offset, SETTINGS *settings)
 {
 	wavegain_opt *wg_opts = malloc(sizeof(wavegain_opt));
@@ -359,13 +374,18 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 	             result = 0,
 	             delete_temp = 0,
 	             i;
-	float        Gain;
+	double       Gain;
 	double       scale;
 	double       total_read = 0.;
 	double       wrap_prev_pos;
 	double       wrap_prev_neg;
 	void         *sample_buffer;
 	input_format *format;
+
+	memset(wg_opts, 0, sizeof(wavegain_opt));
+
+	wg_opts->force = settings->force;
+	wg_opts->undo = settings->undo;
 
 	infile = fopen(filename, "rb");
 
@@ -374,6 +394,7 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 		goto exit;
 	}
 	wg_opts->apply_gain = 1;
+	wg_opts->write_chunk = settings->write_chunk;
 
 	/*
 	 * Now, we need to select an input audio format
@@ -382,9 +403,33 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 	format = open_audio_file(infile, wg_opts);
 	if (!format) {
 		format->close_func(wg_opts->readdata);
+		if (wg_opts)
+			free(wg_opts);
 		fclose(infile);
 		/* error reported by reader */
 		fprintf (stderr, " Unrecognized file format for %s.\n", filename) ;
+	}
+	else if (wg_opts->undo && !wg_opts->gain_chunk) {
+		format->close_func(wg_opts->readdata);
+		if (wg_opts)
+			free(wg_opts);
+		fclose(infile);
+		fprintf(stderr, " Skipping file: %s - 'gain' chunk not found.\n", filename);
+		if (write_to_log) {
+			write_log(" Skipping file: %s - 'gain' chunk not found.\n", filename);
+		}
+		result = 1;
+	}
+	else if (wg_opts->gain_scale == 1.0 && !wg_opts->force) {
+		format->close_func(wg_opts->readdata);
+		if (wg_opts)
+			free(wg_opts);
+		fclose(infile);
+		fprintf(stderr, " Skipping file: %s - Gain already undone.\n", filename);
+		if (write_to_log) {
+			write_log(" Skipping file: %s - Gain already undone.\n", filename);
+		}
+		result = 1;
 	}
 	else {
 		double **pcm = malloc(sizeof(double *) * wg_opts->channels);
@@ -396,37 +441,27 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 			case WAV_NO_FMT:
 				if (wg_opts->format == WAV_FMT_AIFF || wg_opts->format == WAV_FMT_AIFC8
 								   || wg_opts->format == WAV_FMT_AIFC16) {
-					wg_opts->format = settings->format = WAV_FMT_AIFF;
-					wg_opts->endianness = BIG;
+					wg_opts->format = WAV_FMT_AIFF;
 					wrap_prev_pos = 0x7fff;
 					wrap_prev_neg = -0x8000;
 				}
-				else if (wg_opts->samplesize == 8) {
-					wg_opts->format = settings->format = WAV_FMT_8BIT;
+				else if (wg_opts->format == WAV_FMT_8BIT) {
 					wrap_prev_pos = 0x7f;
 					wrap_prev_neg = -0x80;
 				}
-				else if (wg_opts->samplesize == 16) {
-					wg_opts->format = settings->format = WAV_FMT_16BIT;
-					wg_opts->endianness = LITTLE;
+				else if (wg_opts->format == WAV_FMT_16BIT) {
 					wrap_prev_pos = 0x7fff;
 					wrap_prev_neg = -0x8000;
 				}
-				else if (wg_opts->samplesize == 24) {
-					wg_opts->format = settings->format = WAV_FMT_24BIT;
-					wg_opts->endianness = LITTLE;
+				else if (wg_opts->format == WAV_FMT_24BIT) {
 					wrap_prev_pos = 0x7fffff;
 					wrap_prev_neg = -0x800000;
 				}
-				else if (wg_opts->samplesize == 32) {
-					wg_opts->format = settings->format = WAV_FMT_32BIT;
-					wg_opts->endianness = LITTLE;
+				else if (wg_opts->format == WAV_FMT_32BIT) {
 					wrap_prev_pos = 0x7fffffff;
 					wrap_prev_neg = -0x7fffffff;
 				}
 				else if (wg_opts->format == WAV_FMT_FLOAT) {
-					wg_opts->format = settings->format = WAV_FMT_FLOAT;
-					wg_opts->endianness = LITTLE;
 					wrap_prev_pos = 1 - (1 / 0x80000000);
 					wrap_prev_neg = -1.;
 				}
@@ -467,6 +502,7 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 				break;
 			case WAV_FMT_FLOAT:
 				wg_opts->format = WAV_FMT_FLOAT;
+				wg_opts->samplesize = 32;
 				wg_opts->endianness = LITTLE;
 				wrap_prev_pos = 1 - (1 / 0x80000000);
 				wrap_prev_neg = -1.;
@@ -485,17 +521,25 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 
 		Init_Dither (wg_opts->samplesize, settings->shapingtype);
 
-		if(settings->audiophile)
-			Gain = audiophile_gain;
-		else
-			Gain = radio_gain;
+		if (wg_opts->undo) {
+			scale = 1.0 / wg_opts->gain_scale;
+		        Gain = 20. * log10(scale);
+			wg_opts->gain_scale = 1.0;
+		}
+		else {
+			if (settings->audiophile)
+				Gain = audiophile_gain;
+			else
+				Gain = radio_gain;
 
-		scale = pow(10., Gain * 0.05);
+			scale = pow(10., Gain * 0.05);
+			wg_opts->gain_scale = scale;
+		}
 
 		fprintf(stderr, "                                             \r");
-		fprintf(stderr, " Applying Gain of %+5.2f dB to file: %s\n", Gain, filename);
-		if (write_log) {
-			log_error(" Applying Gain of %+5.2f dB to file: %s\n", Gain, filename);
+		fprintf(stderr, " Applying Gain of %+5.2lf dB to file: %s\n", Gain, filename);
+		if (write_to_log) {
+			write_log(" Applying Gain of %+5.2lf dB to file: %s\n", Gain, filename);
 		}
 
 		while (1) {
@@ -505,9 +549,13 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 			total_read += ((double)readcount / wg_opts->rate);
 			total_files += ((double)readcount / wg_opts->rate);
 			if( (long)total_files % 4 == 0) {
-				fprintf(stderr, "This file %3.0lf%% done\tAll files %3.0lf%% done\r", 
-					total_read / (wg_opts->total_samples_per_channel / wg_opts->rate) * 100,
-					total_files / (total_samples / wg_opts->rate) * 100);
+				if (wg_opts->undo)
+					fprintf(stderr, "This file %3.0lf%% done\r", 
+						total_read / (wg_opts->total_samples_per_channel / wg_opts->rate) * 100);
+				else
+					fprintf(stderr, "This file %3.0lf%% done\tAll files %3.0lf%% done\r", 
+						total_read / (wg_opts->total_samples_per_channel / wg_opts->rate) * 100,
+						total_files / (total_samples / wg_opts->rate) * 100);
 			}
 
 			if (readcount == 0) {
@@ -549,12 +597,12 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 							else if (pcm[k][j] > 0.5)
 								pcm[k][j] = tanh((pcm[k][j] - 0.5) / (1-0.5)) * (1-0.5) + 0.5;
 						}
-						if (settings->format != WAV_FMT_FLOAT) {
+						if (wg_opts->format != WAV_FMT_FLOAT) {
 							Sum = pcm[k][j]*2147483647.f;
 							if (i > 31)
 								i = 0;
 							val = dither_output(settings->dithering, settings->shapingtype, i,
-									    Sum, k, settings->format);
+									    Sum, k, wg_opts->format);
 							if (val > (Int64_t)wrap_prev_pos)
 								val = (Int64_t)wrap_prev_pos;
 							else if (val < (Int64_t)wrap_prev_neg)
@@ -570,7 +618,7 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 					}
 				}
 				sample_buffer = output_to_PCM(pcm, sample_buffer, wg_opts->channels,
-						bout, settings->format);
+						bout, wg_opts->format);
 				/* write to file */
 				write_audio_file(aufile, sample_buffer, bout * wg_opts->channels);
 
@@ -595,7 +643,6 @@ int write_gains(const char *filename, float radio_gain, float audiophile_gain, f
 				goto exit;
 			}
 		}
-    
 		result = 1;
 	}
 exit:

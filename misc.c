@@ -70,7 +70,7 @@ char* last_path(const char* path)
 	return (char*) path;
 }
 
-void log_error(const char *fmt, ...)
+void write_log(const char *fmt, ...)
 {
 	va_list ap;
 	FILE *fp;
@@ -84,20 +84,9 @@ void log_error(const char *fmt, ...)
 		sprintf(msgbuf, "%s %s", "<buffer overflow> ", fmt);
 	else {
 		va_start(ap, fmt);
-
 		vsprintf(bufp, fmt, ap);
-
 		va_end(ap);
-
-		if (errno != 0) {
-			bufp = msgbuf + strlen(msgbuf);
-			sprintf(bufp, " error is: %s (%d)", strerror(errno), errno);
-			errno = 0;
-		}
 	}
-
-	va_start(ap, fmt);
-
 	if ((fp = fopen(log_file_name, "a")) == (FILE *)NULL)
 		return;
 

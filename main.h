@@ -2,7 +2,7 @@
 #define MAIN_H
 
 /* Some version numbers */
-#define WAVEGAIN_VERSION "1.2.6"
+#define WAVEGAIN_VERSION "1.2.7"
 
 #define BUFFER_LEN  16384
 #define TEMP_NAME "wavegain.tmp"
@@ -19,8 +19,8 @@ typedef struct file_list
 {
     struct file_list* next_file;
     const char* filename;
-    float track_gain;
-    float track_peak;
+    double track_gain;
+    double track_peak;
     double dc_offset[2];
     double offset[2];
 } FILE_LIST;
@@ -32,13 +32,17 @@ typedef struct settings
     FILE_LIST* file_list;         /**< Files to process (possibly as an album) */
 #ifdef ENABLE_RECURSIVE
     char* pattern;                /**< Pattern to match file names against */
+    int recursive;
 #endif
     int first_file;               /**< About to process first file in directory */
-    float man_gain;               /**< Apply Manual Gain entered by user */
-    float album_peak;             /**< Will end up storing the highest value of the tracks analyzed */
+    double man_gain;              /**< Apply Manual Gain entered by user */
+    double album_peak;            /**< Will end up storing the highest value of the tracks analyzed */
     int audiophile;               /**< Calculate Album gain */
     int scale;                    /**< write Scale values to stdout */
     int apply_gain;               /**< Apply the calculated gain - album or track */
+    int write_chunk;              /**< Write a 'gain' chunk containing the scalefactor applied to the wave data */
+    int force;                    /**< Force a file to be re-replaygained when 'gain' chunk present */
+    int undo;                     /**< Read the value in the 'gain' chunk and re-scale the data */
     int set_album_gain;           /**< Don't apply the calculated album gain if set */
     int fast;                     /**< Use the fast routines for RG analysis */
     int std_out;                  /**< Write output file to stdout */
@@ -52,10 +56,8 @@ typedef struct settings
     int shapingtype;              /**< Noise shaping to use in dithering */
     int limiter;                  /**< Apply Hard limiter */
     unsigned int outbitwidth;     /**< bitwidth of desired output */
-    unsigned int format;          /**< libsndfile format of desired output */
-#ifdef ENABLE_RECURSIVE
-    int recursive;
-#endif
+    unsigned int format;          /**< format of desired output */
+    int need_to_process;          /**< need to process even if peak unchanged */
     char* cmd;
 } SETTINGS;
 

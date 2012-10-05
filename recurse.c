@@ -431,7 +431,6 @@ static int process_directory(const char* current, const char* path, SETTINGS* se
 	int result = -1;
 
 	old_path = getcwd(NULL, 1024);
-//	old_path = _getcwd(NULL, 1024);
 
 	if (old_path == NULL) {
 		file_error(_("Couldn't get name of current directory: "));
@@ -454,7 +453,6 @@ static int process_directory(const char* current, const char* path, SETTINGS* se
 	strcat(full_path, path);
 
 	if (chdir(path) == 0) {
-//	if (_chdir(path) == 0) {
 		DIRECTORY* directory;
 		FILE_LIST* file_list = NULL;
 
@@ -501,7 +499,6 @@ static int process_directory(const char* current, const char* path, SETTINGS* se
 		free_list(file_list);
 
 		if ((result == 0) && (chdir(old_path) != 0)) {
-//		if ((result == 0) && (_chdir(old_path) != 0)) {
 			file_error(_("Couldn't go back to folder '%s': "), old_path);
 			result = 0;
 		}
@@ -529,7 +526,6 @@ static int process_directory(const char* current, const char* path, SETTINGS* se
 int process_argument(const char* path, SETTINGS* settings)
 {
 	char* buffer = strdup(path);
-//	char* buffer = _strdup(path);
 	char* my_path;
 	int my_path_len;
 	int dir;
