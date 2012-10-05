@@ -7,6 +7,7 @@ typedef unsigned __int64    Uint64_t;
 #define chdir _chdir
 #define strdup _strdup
 #define getcwd _getcwd
+#define getpid _getpid
 #else
 typedef signed   long long  Int64_t;
 typedef unsigned long long  Uint64_t;

@@ -88,10 +88,19 @@
  *  Optimization/clarity suggestions are welcome.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+#ifdef HAVE_SSE2
+#include <emmintrin.h>
+#include <mmintrin.h>
+#endif
 
 #include "gain_analysis.h"
 
@@ -128,8 +137,12 @@ Float_t          routbuf   [MAX_SAMPLES_PER_WINDOW + MAX_ORDER];
 Float_t*         rout;
 long             sampleWindow;                                    // number of samples required to reach number of milliseconds required for RMS window
 long             totsamp;
+#ifdef HAVE_SSE2
+__m128d          lrsum;
+#else
 double           lsum;
 double           rsum;
+#endif
 int              freqindex;
 int              first;
 static Uint32_t  A [(size_t)(STEPS_per_dB * MAX_dB)];
@@ -143,6 +156,39 @@ static Uint32_t  B [(size_t)(STEPS_per_dB * MAX_dB)];
 #pragma warning ( disable : 4305 )
 #endif
 #endif
+
+#ifdef HAVE_SSE2
+__declspec(align(16)) static const Float_t ABYule[12][2*(YULE_ORDER + 2)] = {
+    {0.006471345933032,  -0.02567678242161,  0.049805860704367,  -0.05823001743528,  0.040611847441914,  -0.010912036887501, -0.00901635868667,  0.012448886238123,  -0.007206683749426, 0.002167156433951,  -0.000261819276949,  0.0,    -7.22103125152679,  24.7034187975904,   -52.6825833623896,  77.4825736677539,   -82.0074753444205,  63.1566097101925,   -34.889569769245,   13.2126852760198,   -3.09445623301669,  0.340344741393305,  0.0, 0.0},
+    {0.015415414474287,  -0.07691359399407,  0.196677418516518,  -0.338855114128061, 0.430094579594561,  -0.415015413747894, 0.304942508151101,  -0.166191795926663, 0.063198189938739,  -0.015003978694525, 0.001748085184539,   0.0,    -7.19001570087017,  24.4109412087159,   -51.6306373580801,  75.3978476863163,   -79.4164552507386,  61.0373661948115,   -33.7446462547014,  12.8168791146274,   -3.01332198541437,  0.223619893831468,  0.0, 0.0},
+    {0.021776466467053,  -0.062376961003801, 0.107731165328514,  -0.150994515142316, 0.170334807313632,  -0.157984942890531, 0.121639833268721,  -0.074094040816409, 0.031282852041061,  -0.00755421235941,  0.00117925454213,    0.0,    -5.74819833657784,  16.246507961894,    -29.9691822642542,  40.027597579378,    -40.3209196052655,  30.8542077487718,   -17.5965138737281,  7.10690214103873,   -1.82175564515191,  0.223619893831468,  0.0, 0.0},
+    {0.03857599435200,   -0.02160367184185,  -0.00123395316851,  -0.00009291677959,  -0.01655260341619,  0.02161526843274,   -0.02074045215285,  0.00594298065125,   0.00306428023191,   0.00012025322027,   0.00288463683916,    0.0,    -3.84664617118067,  7.81501653005538,   -11.34170355132042, 13.05504219327545,  -12.28759895145294, 9.48293806319790,   -5.87257861775999,  2.75465861874613,   -0.86984376593551,  0.13919314567432,   0.0, 0.0},
+    {0.05418656406430,   -0.02911007808948,  -0.00848709379851,  -0.00851165645469,  -0.00834990904936,  0.02245293253339,   -0.02596338512915,  0.01624864962975,   -0.00240879051584,  0.00674613682247,   -0.00187763777362,   0.0,    -3.47845948550071,  6.36317777566148,   -8.54751527471874,  9.47693607801280,   -8.81498681370155,  6.85401540936998,   -4.39470996079559,  2.19611684890774,   -0.75104302451432,  0.13149317958808,   0.0, 0.0},
+    {0.15457299681924,   -0.09331049056315,  -0.06247880153653,  0.02163541888798,   -0.05588393329856,  0.04781476674921,   0.00222312597743,   0.03174092540049,   -0.01390589421898,  0.00651420667831,   -0.00881362733839,   0.0,    -2.37898834973084,  2.84868151156327,   -2.64577170229825,  2.23697657451713,   -1.67148153367602,  1.00595954808547,   -0.45953458054983,  0.16378164858596,   -0.05032077717131,  0.02347897407020,   0.0, 0.0},
+    {0.30296907319327,   -0.22613988682123,  -0.08587323730772,  0.03282930172664,   -0.00915702933434,  -0.02364141202522,  -0.00584456039913,  0.06276101321749,   -0.00000828086748,  0.00205861885564,   -0.02950134983287,   0.0,    -1.61273165137247,  1.07977492259970,   -0.25656257754070,  -0.16276719120440,  -0.22638893773906,  0.39120800788284,   -0.22138138954925,  0.04500235387352,   0.02005851806501,   0.00302439095741,   0.0, 0.0},
+    {0.33642304856132,   -0.25572241425570,  -0.11828570177555,  0.11921148675203,   -0.07834489609479,  -0.00469977914380,  -0.00589500224440,  0.05724228140351,   0.00832043980773,   -0.01635381384540,  -0.01760176568150,   0.0,    -1.49858979367799,  0.87350271418188,   0.12205022308084,   -0.80774944671438,  0.47854794562326,   -0.12453458140019,  -0.04067510197014,  0.08333755284107,   -0.04237348025746,  0.02977207319925,   0.0, 0.0},
+    {0.44915256608450,   -0.14351757464547,  -0.22784394429749,  -0.01419140100551,  0.04078262797139,   -0.12398163381748,  0.04097565135648,   0.10478503600251,   -0.01863887810927,  -0.03193428438915,  0.00541907748707,    0.0,    -0.62820619233671,  0.29661783706366,   -0.37256372942400,  0.00213767857124,   -0.42029820170918,  0.22199650564824,   0.00613424350682,   0.06747620744683,   0.05784820375801,   0.03222754072173,   0.0, 0.0},
+    {0.56619470757641,   -0.75464456939302,  0.16242137742230,   0.16744243493672,   -0.18901604199609,  0.30931782841830,   -0.27562961986224,  0.00647310677246,   0.08647503780351,   -0.03788984554840,  -0.00588215443421,   0.0,    -1.04800335126349,  0.29156311971249,   -0.26806001042947,  0.00819999645858,   0.45054734505008,   -0.33032403314006,  0.06739368333110,   -0.04784254229033,  0.01639907836189,   0.01807364323573,   0.0, 0.0},
+    {0.58100494960553,   -0.53174909058578,  -0.14289799034253,  0.17520704835522,   0.02377945217615,   0.15558449135573,   -0.25344790059353,  0.01628462406333,   0.06920467763959,   -0.03721611395801,  -0.00749618797172,   0.0,    -0.51035327095184,  -0.31863563325245,  -0.20256413484477,  0.14728154134330,   0.38952639978999,   -0.23313271880868,  -0.05246019024463,  -0.02505961724053,  0.02442357316099,   0.01818801111503,   0.0, 0.0},
+    {0.53648789255105,   -0.42163034350696,  -0.00275953611929,  0.04267842219415,   -0.10214864179676,  0.14590772289388,   -0.02459864859345,  -0.11202315195388,  -0.04060034127000,  0.04788665548180,   -0.02217936801134,   0.0,    -0.25049871956020,  -0.43193942311114,  -0.03424681017675,  -0.04678328784242,  0.26408300200955,   0.15113130533216,   -0.17556493366449,  -0.18823009262115,  0.05477720428674,   0.04704409688120,   0.0, 0.0},
+};
+
+__declspec(align(16)) static const Float_t ABButter[12][2*(BUTTER_ORDER + 1)] = {
+    {0.99308203517541,   -1.98616407035082,  0.99308203517541,  0.0, -1.98611621154089,  0.986211929160751},
+    {0.992472550461293,  -1.98494510092258,  0.992472550461293, 0.0, -1.98488843762334,  0.979389350028798},
+    {0.989641019334721,  -1.97928203866944,  0.989641019334721, 0.0, -1.97917472731008,  0.979389350028798},
+    {0.98621192462708,   -1.97242384925416,  0.98621192462708,  0.0, -1.97223372919527,  0.97261396931306},
+    {0.98500175787242,   -1.97000351574484,  0.98500175787242,  0.0, -1.96977855582618,  0.97022847566350},
+    {0.97938932735214,   -1.95877865470428,  0.97938932735214,  0.0, -1.95835380975398,  0.95920349965459},
+    {0.97531843204928,   -1.95063686409857,  0.97531843204928,  0.0, -1.95002759149878,  0.95124613669835},
+    {0.97316523498161,   -1.94633046996323,  0.97316523498161,  0.0, -1.94561023566527,  0.94705070426118},
+    {0.96454515552826,   -1.92909031105652,  0.96454515552826,  0.0, -1.92783286977036,  0.93034775234268},
+    {0.96009142950541,   -1.92018285901082,  0.96009142950541,  0.0, -1.91858953033784,  0.92177618768381},
+    {0.95856916599601,   -1.91713833199203,  0.95856916599601,  0.0, -1.91542108074780,  0.91885558323625},
+    {0.94597685600279,   -1.89195371200558,  0.94597685600279,  0.0, -1.88903307939452,  0.89487434461664},
+};
+
+#else
 
 static const Float_t ABYule[12][2*YULE_ORDER + 1] = {
 	{0.006471345933032, -7.22103125152679, -0.02567678242161,  24.7034187975904,   0.049805860704367, -52.6825833623896,  -0.05823001743528,  77.4825736677539,   0.040611847441914, -82.0074753444205,  -0.010912036887501, 63.1566097101925,  -0.00901635868667,  -34.889569769245,    0.012448886238123, 13.2126852760198,  -0.007206683749426, -3.09445623301669,  0.002167156433951, 0.340344741393305, -0.000261819276949},
@@ -173,7 +219,7 @@ static const Float_t ABButter[12][2*BUTTER_ORDER + 1] = {
     {0.95856916599601, -1.91542108074780, -1.91713833199203,  0.91885558323625,  0.95856916599601 },
     {0.94597685600279, -1.88903307939452, -1.89195371200558,  0.89487434461664,  0.94597685600279 }
 };
-
+#endif
 
 #ifdef WIN32
 #ifndef __GNUC__
@@ -187,51 +233,118 @@ static const Float_t ABButter[12][2*BUTTER_ORDER + 1] = {
 // either ignore the warnings or uncomment the three "y" lines (and comment out the indicated line)
 
 static void
-filterYule (const Float_t* input, Float_t* output, size_t nSamples, const Float_t* kernel)
+filterYule(const Float_t* input, Float_t* output, size_t nSamples, const Float_t* kernel)
 {
+#ifdef HAVE_SSE2
+
+    __m128d __kernel, __result, __temp;
+    __declspec(align(16)) Float_t __temp2[2];
 
     while (nSamples--) {
-       *output =  1e-10  /* 1e-10 is a hack to avoid slowdown because of denormals */
-         + input [0]  * kernel[0]
-         - output[-1] * kernel[1]
-         + input [-1] * kernel[2]
-         - output[-2] * kernel[3]
-         + input [-2] * kernel[4]
-         - output[-3] * kernel[5]
-         + input [-3] * kernel[6]
-         - output[-4] * kernel[7]
-         + input [-4] * kernel[8]
-         - output[-5] * kernel[9]
-         + input [-5] * kernel[10]
-         - output[-6] * kernel[11]
-         + input [-6] * kernel[12]
-         - output[-7] * kernel[13]
-         + input [-7] * kernel[14]
-         - output[-8] * kernel[15]
-         + input [-8] * kernel[16]
-         - output[-9] * kernel[17]
-         + input [-9] * kernel[18]
-         - output[-10]* kernel[19]
-         + input [-10]* kernel[20];
+        __kernel = _mm_loadr_pd(&kernel[0]);
+        __temp = _mm_loadu_pd(&input[-1]);
+        __result = _mm_mul_pd(__temp, __kernel);
+        __kernel = _mm_loadr_pd(&kernel[12]);
+        __temp = _mm_loadu_pd(&output[-2]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[2]);
+        __temp = _mm_loadu_pd(&input[-3]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_add_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[14]);
+        __temp = _mm_loadu_pd(&output[-4]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[4]);
+        __temp = _mm_loadu_pd(&input[-5]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_add_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[16]);
+        __temp = _mm_loadu_pd(&output[-6]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[6]);
+        __temp = _mm_loadu_pd(&input[-7]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_add_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[18]);
+        __temp = _mm_loadu_pd(&output[-8]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[8]);
+        __temp = _mm_loadu_pd(&input[-9]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_add_pd(__result, __temp);
+        __kernel = _mm_loadr_pd(&kernel[20]);
+        __temp = _mm_loadu_pd(&output[-10]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+
+        _mm_store_pd(__temp2, __result);
+        *output =  1e-10  /* 1e-10 is a hack to avoid slowdown because of denormals */
+                + __temp2[0]
+                + __temp2[1]
+                + input [-10] * kernel[11];
+                ;
+
         ++output;
-        ++input;
+        ++input; 
     }
+#else
+    while (nSamples--) {
+        *output =  1e-10  /* 1e-10 is a hack to avoid slowdown because of denormals */
+                    + input [0]  * kernel[0] - output[-1] * kernel[1]
+                    + input [-1] * kernel[2] - output[-2] * kernel[3]
+                    + input [-2] * kernel[4] - output[-3] * kernel[5]
+                    + input [-3] * kernel[6] - output[-4] * kernel[7]
+                    + input [-4] * kernel[8] - output[-5] * kernel[9]
+                    + input [-5] * kernel[10] - output[-6] * kernel[11]
+                    + input [-6] * kernel[12] - output[-7] * kernel[13]
+                    + input [-7] * kernel[14] - output[-8] * kernel[15]
+                    + input [-8] * kernel[16] - output[-9] * kernel[17]
+                    + input [-9] * kernel[18] - output[-10]* kernel[19]
+                    + input [-10]* kernel[20];
+
+        ++output;
+        ++input; 
+    }
+#endif
 }
 
 static void
-filterButter (const Float_t* input, Float_t* output, size_t nSamples, const Float_t* kernel)
+filterButter(const Float_t* input, Float_t* output, size_t nSamples, const Float_t* kernel)
 {   
+#ifdef HAVE_SSE2
+    __m128d __kernel, __result, __temp;
+    __declspec(align(16)) Float_t __temp2[2];
 
     while (nSamples--) {
-        *output =  
-           input [0]  * kernel[0]
-         - output[-1] * kernel[1]
-         + input [-1] * kernel[2]
-         - output[-2] * kernel[3]
-         + input [-2] * kernel[4];
+        __kernel = _mm_loadr_pd(&kernel[0]);
+        __temp = _mm_loadu_pd(&input[-1]);
+        __result = _mm_mul_pd(__temp, __kernel);
+        __kernel = _mm_loadr_pd(&kernel[4]);
+        __temp = _mm_loadu_pd(&output[-2]);
+        __temp = _mm_mul_pd(__kernel, __temp);
+        __result = _mm_sub_pd(__result, __temp);
+        _mm_store_pd(__temp2, __result);
+        *output = __temp2[0]
+                + __temp2[1]
+                + input [-2] * kernel[2];
+                ;
         ++output;
         ++input;
     }
+#else
+    while (nSamples--) {
+        *output =  
+               input [0]  * kernel[0] - output[-1] * kernel[1]
+             + input [-1] * kernel[2] - output[-2] * kernel[3]
+             + input [-2] * kernel[4];
+        ++output;
+        ++input;
+    }
+#endif
 }
 
 
@@ -263,10 +376,13 @@ ResetSampleFrequency ( long samplefreq ) {
 
     sampleWindow = (int) ceil (samplefreq * RMS_WINDOW_TIME);
 
+#ifdef HAVE_SSE2
+    lrsum = _mm_setzero_pd();
+#else
     lsum         = 0.;
     rsum         = 0.;
+#endif
     totsamp      = 0;
-
     memset ( A, 0, sizeof(A) );
 
     return INIT_GAIN_ANALYSIS_OK;
@@ -306,6 +422,10 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
     long            cursamples;
     long            cursamplepos;
     int             i;
+#ifdef HAVE_SSE2
+    __m128d __temp;
+    __declspec(align(16)) Float_t __temp2[2];
+#endif
 
     if ( num_samples == 0 )
         return GAIN_ANALYSIS_OK;
@@ -350,14 +470,80 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
         curleft = lout + totsamp;                   // Get the squared values
         curright = rout + totsamp;
 
+#ifdef HAVE_SSE2
         i = cursamples % 16;
         while (i--)
-        {   lsum += fsqr(*curleft++);
+        {   
+            __temp = _mm_set_pd (*curleft++, *curright++);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+        }
+        i = cursamples / 16;
+        while (i--)
+        {   
+            __temp = _mm_set_pd (curleft[0], curright[0]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[1], curright[1]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[2], curright[2]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[3], curright[3]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[4], curright[4]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[5], curright[5]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[6], curright[6]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[7], curright[7]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[8], curright[8]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[9], curright[9]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[10], curright[10]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[11], curright[11]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[12], curright[12]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[13], curright[13]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[14], curright[14]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+            __temp = _mm_set_pd (curleft[15], curright[15]);
+            __temp = _mm_mul_pd(__temp, __temp);
+            lrsum = _mm_add_pd(lrsum, __temp);
+
+            curleft += 16;
+            curright += 16;
+        }
+#else
+        i = cursamples % 16;
+        while (i--)
+        {   
+            lsum += fsqr(*curleft++);
             rsum += fsqr(*curright++);
         }
         i = cursamples / 16;
         while (i--)
-        {   lsum += fsqr(curleft[0])
+        {   
+            lsum += fsqr(curleft[0])
                   + fsqr(curleft[1])
                   + fsqr(curleft[2])
                   + fsqr(curleft[3])
@@ -373,7 +559,9 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
                   + fsqr(curleft[13])
                   + fsqr(curleft[14])
                   + fsqr(curleft[15]);
+
             curleft += 16;
+
             rsum += fsqr(curright[0])
                   + fsqr(curright[1])
                   + fsqr(curright[2])
@@ -390,19 +578,32 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
                   + fsqr(curright[13])
                   + fsqr(curright[14])
                   + fsqr(curright[15]);
+
             curright += 16;
         }
-
+#endif
         batchsamples -= cursamples;
         cursamplepos += cursamples;
         totsamp      += cursamples;
         if ( totsamp == sampleWindow ) {  // Get the Root Mean Square (RMS) for this set of samples
-            double  val  = STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
-            int     ival = (int) val;
+            double  val;
+            int ival;
+#ifdef HAVE_SSE2
+            _mm_store_pd (__temp2, lrsum);
+
+            val = STEPS_per_dB * 10. * log10 ( (__temp2[0]+__temp2[1]) / totsamp * 0.5 + 1.e-37 );
+#else
+            val  = STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
+#endif
+            ival = (int) val;
             if ( ival <                     0 ) ival = 0;
             if ( ival >= (int)(sizeof(A)/sizeof(*A)) ) ival = sizeof(A)/sizeof(*A) - 1;
             A [ival]++;
+#ifdef HAVE_SSE2
+            lrsum = _mm_setzero_pd();
+#else
             lsum = rsum = 0.;
+#endif
             memmove ( loutbuf , loutbuf  + totsamp, MAX_ORDER * sizeof(Float_t) );
             memmove ( routbuf , routbuf  + totsamp, MAX_ORDER * sizeof(Float_t) );
             memmove ( lstepbuf, lstepbuf + totsamp, MAX_ORDER * sizeof(Float_t) );
@@ -467,7 +668,11 @@ GetTitleGain ( void )
         linprebuf[i] = lstepbuf[i] = loutbuf[i] = rinprebuf[i] = rstepbuf[i] = routbuf[i] = 0.f;
 
     totsamp = 0;
+#ifdef HAVE_SSE2
+    lrsum = _mm_setzero_pd();
+#else
     lsum    = rsum = 0.;
+#endif
     return retval;
 }
 

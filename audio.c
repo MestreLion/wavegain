@@ -46,7 +46,10 @@
 #include <malloc.h>
 #endif
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "audio.h"
 #include "i18n.h"
 #include "misc.h"
@@ -694,7 +697,7 @@ int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 	}
 	else if (format.format == WAVE_FORMAT_EXTENSIBLE) {
 		format.channel_mask = READ_U32_LE(buf+20);
-		if (format.channel_mask != SPEAKER_FRONT_LEFT || format.channel_mask != (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT)) {
+		if (format.channel_mask > 3) {
 			fprintf(stderr, "ERROR: Wav file is unsupported type (must be standard 1 or 2 channel PCM\n"
 					" or type 3 floating point PCM)(2)\n");
 			return 0;

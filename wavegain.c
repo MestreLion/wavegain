@@ -12,7 +12,10 @@
  * Linux patch by Marc Brooker
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -22,6 +25,7 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include <process.h>
 #else
 # ifndef __MACOSX__
 #  include <sys/io.h>
@@ -516,12 +520,19 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 
 		wg_opts->std_out = settings->std_out;
 
-		// Create temp file name
+		/* Create temp file name */
                 srand(time(NULL) ^ getpid());
 		serial = rand();
-		sprintf(tempSerial, "%d", serial);
+#ifdef _WIN32
+		sprintf(tempSerial,  "%d", serial);
 		strcpy(tempName, TEMP_NAME);
 		strcat(tempName, tempSerial);
+#else
+		snprintf(tempSerial, 6, "%d", serial);
+		strncpy(tempName, TEMP_NAME, 17);
+		printf("tempName=%s tempSerial=%s\n", tempName, tempSerial);
+		strncat(tempName, tempSerial, 6);
+#endif		
 		aufile = open_output_audio_file(tempName, wg_opts);
 
 		if (aufile == NULL) {

@@ -1,161 +1,140 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Intel C++ Project"
-	Version="11.1"
+	Version="12.1"
 	Name="WaveGain"
-	ProjectGUID="{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}"
-	VCNestedProjectGUID="{519BA429-0A0D-44F3-98E0-0C47D9A45F70}"
-	VCNestedProjectFileName="WaveGain.vcproj">
+	ProjectGUID="{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}"
+	VCNestedProjectGUID="{558F1143-4701-48E1-9E08-5A6CFC62CD00}"
+	VCNestedProjectFileName="WaveGain.vcproj"
+	>
 	<Configurations>
 		<Configuration
-			Name="Release|Win32">
+			Name="Debug|Win32"
+			>
 			<Tool
 				Name="GeneralTool"
-				CompilerName="1"/>
+				CompilerName="1"
+			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|Win32">
+			Name="SSE2|Win32"
+			>
 			<Tool
-				Name="GeneralTool"
-				CompilerName="1"/>
+				Name="CppCmplrTool"
+				GenerateAlternateCodePaths="1"
+			/>
 		</Configuration>
 	</Configurations>
 	<Files>
 		<Filter
-			Name="Source Files">
+			Name="Source Files"
+			>
 			<File
-				RelativePath="..\audio.c">
+				RelativePath="..\audio.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\dither.c">
+				RelativePath="..\dither.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\gain_analysis.c">
+				RelativePath="..\gain_analysis.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\getopt.c">
+				RelativePath="..\getopt.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\getopt1.c">
+				RelativePath="..\getopt1.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\main.c">
+				RelativePath="..\main.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\misc.c">
+				RelativePath="..\misc.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\recurse.c">
+				RelativePath="..\recurse.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\wavegain.c">
+				RelativePath="..\wavegain.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="GeneralTool"
-						CompilerName="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="GeneralTool"
-						CompilerName="1"/>
+						CompilerName="1"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>

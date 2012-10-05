@@ -1,22 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "WaveGain", "WaveGain.icproj", "{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "WaveGain", "WaveGain.icproj", "{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
+		SSE2|Win32 = SSE2|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}.Debug|Win32.Build.0 = Debug|Win32
-		{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}.Release|Win32.ActiveCfg = Release|Win32
-		{0CD1B744-6DF0-4891-AC3D-130D38F56D3D}.Release|Win32.Build.0 = Release|Win32
-		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Release|Win32.Build.0 = Release|Win32
-		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Release|Win32.ActiveCfg = Release|Win32
-		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Debug|Win32.Build.0 = Debug|Win32
-		{519BA429-0A0D-44F3-98E0-0C47D9A45F70}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.Debug|Win32.Build.0 = Debug|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.Release|Win32.ActiveCfg = Release|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.Release|Win32.Build.0 = Release|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.SSE2|Win32.ActiveCfg = SSE2|Win32
+		{0A333AB3-1DDC-40AA-A260-C88F2B4F3FDD}.SSE2|Win32.Build.0 = SSE2|Win32
+		{558F1143-4701-48E1-9E08-5A6CFC62CD00}.Debug|Win32.ActiveCfg = Debug|Win32
+		{558F1143-4701-48E1-9E08-5A6CFC62CD00}.Debug|Win32.Build.0 = Debug|Win32
+		{558F1143-4701-48E1-9E08-5A6CFC62CD00}.Release|Win32.ActiveCfg = Release|Win32
+		{558F1143-4701-48E1-9E08-5A6CFC62CD00}.Release|Win32.Build.0 = Release|Win32
+		{558F1143-4701-48E1-9E08-5A6CFC62CD00}.SSE2|Win32.ActiveCfg = SSE2|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

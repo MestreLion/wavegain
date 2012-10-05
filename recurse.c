@@ -14,21 +14,21 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "i18n.h"
-#include "misc.h"
-#include "recurse.h"
-
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
 #else
-#include <errno.h>
 #include <dirent.h>
-#include <stdlib.h>
 #include <unistd.h>
 #endif
+#include "i18n.h"
+#include "misc.h"
+#include "recurse.h"
+
 
 
 #ifdef _WIN32
@@ -479,7 +479,7 @@ static int process_directory(const char* current, const char* path, SETTINGS* se
 						result = -1;
 				}
 				else {
-					file_error(_("Couldn't find '%s': "), path);
+					file_error(_("1-Couldn't find '%s': "), path);
 					result = -1;
 				}
 			} while ((result == 0) && (read_dir(directory) == 0));
