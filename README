@@ -1,0 +1,179 @@
+ReplayGain for wave files, v1.3.1
+
+WaveGain is an application of the ReplayGain algorithms to standard PCM wave
+files. Calculated gain adjustments are applied directly to the audio data,
+instead of just writing metadata as traditionally done for other formats
+like MP3, FLAC and Ogg Vorbis.
+
+The replaygain values can also be added as metadata in a custom RIFF chunk
+named 'gain'. This could theoretically allow WAV files to have same lossless
+functionality as other formats where audio data is not altered. But since no
+current players are aware of this "standard", the metadata is used only by
+WaveGain for the "--undo-gain" feature, which is lossy.
+
+
+About replaygain
+-------------------------------------------------------------------------------
+
+Replaygain is a standard that allows compatible players to play audio files with
+an adjusted volume gain so they have a consistent perceived loudness.
+
+It is similar in concept to Normalization, but instead of using just the peak
+value to calculate the gain, it relies on RMS (sound pressure "power") values
+and psychoacoustics models to calculate a gain based on the perceived loudness
+of an audio file by a human listener.
+
+Loudness can be averaged either for each individual file, also called "Track" or
+"Radio" mode, where every song is adjusted to the same standard loudness; or by
+group, also called "Album" mode, where individual "songs" may sound louder or
+quieter than others, but each "album" as a whole has the same average loudness
+as other albums.
+
+For more information,
+http://en.wikipedia.org/wiki/ReplayGain
+http://wiki.hydrogenaudio.org/index.php?title=Replaygain
+http://wiki.hydrogenaudio.org/index.php?title=ReplayGain_specification
+
+
+The saga of a Debian package for wavegain:
+-------------------------------------------------------------------------------
+
+- Current source code (in .zip format) and windows binaries are published at
+	http://www.rarewares.org/others.php
+	http://www.rarewares.org/files/others/
+
+- An i386 binary .deb for version 1.2.6 (from 2005) was published at
+	http://www.rarewares.org/debian/packages/unstable/index.php
+
+- Later, Linux Mint hosted the source, amd64 and i386 packages for v1.2.8 (2010)
+	http://packages.linuxmint.com/pool/import/w/wavegain/
+
+This package is a combination of current upstream source, a proper Debian
+packaging improved from the Mint release, and some patches to fix some
+(serious) Linux issues.
+
+
+Install how-to
+-------------------------------------------------------------------------------
+
+There are 2 approaches: you can build and install a .deb package, or simply
+compile and install from source. For both I assume you are already at the
+source directory (which is not the root directory of the cloned repository)
+
+Debian method:
+$ sudo apt-get install devscripts # if you don't already have debuild
+$ debuild binary && sudo dpkg --install ../wavegain_*.deb
+
+Traditional method:
+$ make && sudo make install # by default installs to /usr/local/bin/wavegain
+or
+$ make && sudo make install prefix=/usr # to install to /usr/bin/wavegain
+
+
+Pre-compiled binaries and old versions
+-------------------------------------------------------------------------------
+You can find pre-compiled .DEB binariy packages for i386 and amd64, as well
+as as some other goodies, like a mega-archive of all previous versions
+and a (lame and outdated) html manual in the Downloads section of GitHub:
+
+https://github.com/MestreLion/wavegain/downloads
+
+
+License and copyright
+-------------------------------------------------------------------------------
+
+WaveGain is Copyright (c) 2002-2010 John Edwards <john.edwards33@ntlworld.com>,
+a.k.a. John33, and several other co-authors and contributors are mentioned as
+Copyright owners in the source files.
+
+Originally released as LGPL-2.1 or later, although some source code simply says
+GPL, and some others some says GPL2+. Despite this, the project as a whole
+should be regarded as LGPL-2.1+, as per COPYING file. To avoid further confusion
+in the future, I suggest source files be standartized with a common header and
+re-licensed, preferably as GPL-3 or later (not LGPL).
+
+I claim no copyright over the C source code, including patches I made.
+
+The Debianization and aditional material, like this README and Makefile, is
+Copyright (c) 2012 Rodrigo Silva (MestreLion)
+
+
+Documentation (from wavegain --help)
+-------------------------------------------------------------------------------
+
+Copyright (c) 2002-2010 John Edwards <john.edwards33@ntlworld.com>
+Additional code by Magnus Holmgren, Gian-Carlo Pascutto, and Tycho
+
+ Usage: wavegain [options] input.wav [...]
+
+ OPTIONS
+  -h, --help       Prints this help information.
+  -a, --album      Use ReplayGain Audiophile/Album gain setting, or
+  -r, --radio      Use ReplayGain Radio/Single Track gain setting(DEFAULT).
+  -q, --adc        Apply Album based DC Offset correction.
+                   DEFAULT is Track based DC Offset correction.
+  -p, --no_offset  Do NOT apply DC Offset correction.
+  -c, --calculate  Calculates and prints gain settings, and DC Offsets BUT
+                   DOES NOT APPLY THEM - This is the DEFAULT.
+  -x, --scale      Writes scale values to stdout in the format: n.nnnnnn
+                   In Album mode it only writes the Album Scale value, and
+                   in Title mode it only writes the Title Scale values.
+                   ONLY works in Calculation mode.
+  -y, --apply      Calculates and APPLIES gain settings, and applies
+                   DC Offset correction.
+  -w, --write      Writes a 'gain' chunk into the Wave Header.
+                   Stores the scalefactor applied to the wave data as a
+                   double floating point number. Only written when gain
+                   is applied. Presence will result in file being skipped
+                   if reprocessed.
+                   (Unless '--force' or '--undo-gain' are specified.)
+      --force      Forces the reprocessing of a file that contains a 'gain'
+                   chunk and will result in the new scalefactor overwriting
+                   the existing value.
+      --undo-gain  Reads the scalefactor in the 'gain' chunk and uses the
+                   value to reverse the previously applied gain. This will NOT
+                   recreate a bit identical version of the original file, but
+                   it will be rescaled to the original level.
+  -z, --recursive  Search for files recursively, each folder as an album
+  -l, --log        Write log file.(Default filename = WGLog.txt)
+  -f, --logfile    Specify log filename. (Assumes -l if present.)
+  -n, --noclip     NO Clipping Prevention.
+  -d, --dither X   Dither output, where X =
+               0   for       dither OFF (default).
+               1   for       dither without Noise Shaping.
+               2   for       dither with Light Noise Shaping.
+               3   for       dither with Medium Noise Shaping.
+               4   for       dither with Heavy Noise Shaping.
+  -t, --limiter    Apply 6dB Hard Limiter to output.
+  -g, --gain X     Apply additional Manual Gain adjustment in decibels, where
+             X = any floating point number between -20.0 and +12.0.
+                   Clipping Prevention WILL be applied UNLESS '-n' is used.
+  -s, --fast       Calculates and prints gain settings - DOES NOT APPLY THEM.
+                   NOTE: This method does NOT process all samples, it only
+                         processes 200 x 16k chunks of samples. Results will
+                         NOT be as accurate as a full analysis but, with most
+                         material, will be within +/- 0.5db. Files of 8,192,000
+                         real samples, or less, will be analysed in full.
+                         DC Offset is neither calculated nor corrected in
+                         FAST mode.
+  -o, --stdout     Write output file to stdout.
+ FORMAT OPTIONS (One option ONLY may be used)
+  -b, --bits X     Set output sample format, where X =
+             1     for        8 bit unsigned PCM data.
+             2     for       16 bit signed PCM data.
+             3     for       24 bit signed PCM data.
+             4     for       32 bit signed PCM data.
+             5     for       32 bit floats.
+             6     for       16 bit 'aiff' format.
+         NOTE:     By default, the output file will be of the same bitwidth
+                   and type as the input file.
+ INPUT FILES
+  WaveGain input files may be 8, 16, 24 or 32 bit integer, or floating point
+  wave files with 1 or 2 channels and a sample rate of 96000Hz, 88200Hz,
+  64000Hz, 48000Hz, 44100Hz, 32000Hz, 24000Hz, 22050Hz, 16000Hz, 12000Hz,
+  11025Hz or 8000Hz.
+  16 bit integer 'aiff' files are also supported.
+  Wildcards (?, *) can be used in the filename, or '-' for stdin.
+
+
+wavegain-1.3.1
