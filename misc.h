@@ -1,7 +1,7 @@
 #ifndef MISC_H
 #define MISC_H
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 typedef signed   __int64    Int64_t;
 typedef unsigned __int64    Uint64_t;
 #define chdir _chdir

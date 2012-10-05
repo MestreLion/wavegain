@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include "misc.h"
 
 typedef long (*audio_read_func)(void *src,
                                 double **buffer,
@@ -51,6 +52,7 @@ typedef struct
 	int format;
 	int gain_chunk;
 	double gain_scale;
+	int std_in;
 	int std_out;
 	int apply_gain;
 	int write_chunk;
@@ -143,7 +145,7 @@ typedef struct
 audio_file *open_output_audio_file(char *infile, wavegain_opt *opt);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(FILE *in, audio_file *aufile, wavegain_opt *opt);
-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, __int64 file_size);
+static int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size);
 static int write_aiff_header(audio_file *aufile);
 static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);

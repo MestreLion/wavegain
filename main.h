@@ -2,7 +2,7 @@
 #define MAIN_H
 
 /* Some version numbers */
-#define WAVEGAIN_VERSION "1.2.7"
+#define WAVEGAIN_VERSION "1.2.8"
 
 #define BUFFER_LEN  16384
 #define TEMP_NAME "wavegain.tmp"

@@ -144,6 +144,7 @@ int get_gain(const char *filename, double *track_peak, double *track_gain,
 	if(!strcmp(filename, "-")) {
 		infile = stdin;
 		settings->apply_gain = 0;
+		wg_opts->std_in = 1;
 #ifdef _WIN32
 		_setmode( _fileno(stdin), _O_BINARY );
 #endif
