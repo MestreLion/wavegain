@@ -32,6 +32,23 @@ extern "C" {
 #include <stdio.h>
 #include "misc.h"
 
+/* In WIN32, the following bitmap can be found in sdk\inc\ksmedia.h and sdk\inc\mmreg.h: */
+
+#ifndef SPEAKER_FRONT_LEFT
+#	define SPEAKER_FRONT_LEFT             0x1
+#	define SPEAKER_FRONT_RIGHT            0x2
+#endif
+
+#ifndef	WAVE_FORMAT_PCM
+#	define	WAVE_FORMAT_PCM                0x0001
+#endif
+#ifndef	WAVE_FORMAT_IEEE_FLOAT
+#	define	WAVE_FORMAT_IEEE_FLOAT         0x0003
+#endif
+#ifndef	WAVE_FORMAT_EXTENSIBLE
+#	define	WAVE_FORMAT_EXTENSIBLE         0xfffe
+#endif
+
 typedef long (*audio_read_func)(void *src,
                                 double **buffer,
                                 int samples,
@@ -77,12 +94,13 @@ typedef struct
 
 
 typedef struct {
-	short format;
-	short channels;
-	int   samplerate;
-	int   bytespersec;
-	short align;
-	short samplesize;
+	unsigned short format;
+	unsigned short channels;
+	unsigned int   channel_mask;
+	unsigned int   samplerate;
+	unsigned int   bytespersec;
+	unsigned short align;
+	unsigned short samplesize;
 } wav_fmt;
 
 typedef struct {

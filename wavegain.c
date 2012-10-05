@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 #include <ctype.h>
 
 #ifdef _WIN32
@@ -183,7 +184,7 @@ int get_gain(const char *filename, double *track_peak, double *track_gain,
 	/* Only initialize gain analysis once in audiophile mode */
 	if (settings->first_file || !settings->audiophile) {
 		if (InitGainAnalysis(wg_opts->rate) != INIT_GAIN_ANALYSIS_OK) {
-			fprintf(stderr, " Error Initializing Gain Analysis (nonstandard samplerate?)\n");
+			fprintf(stderr, " Error Initializing Gain Analysis (non-standard samplerate?)\n");
 			goto exit;
 		}
 	}
@@ -382,6 +383,9 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 	double       wrap_prev_neg;
 	void         *sample_buffer;
 	input_format *format;
+	char         tempName[24] = "";
+	unsigned int serial;
+	char         tempSerial[7] = "";
 
 	memset(wg_opts, 0, sizeof(wavegain_opt));
 
@@ -512,7 +516,13 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 
 		wg_opts->std_out = settings->std_out;
 
-		aufile = open_output_audio_file(TEMP_NAME, wg_opts);
+		// Create temp file name
+                srand(time(NULL) ^ getpid());
+		serial = rand();
+		sprintf(tempSerial, "%d", serial);
+		strcpy(tempName, TEMP_NAME);
+		strcat(tempName, tempSerial);
+		aufile = open_output_audio_file(tempName, wg_opts);
 
 		if (aufile == NULL) {
 			fprintf (stderr, " Not able to open output file %s.\n", TEMP_NAME);
@@ -639,8 +649,8 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 				goto exit;
 			}
     
-			if (rename(TEMP_NAME, filename) != 0) {
-				fprintf(stderr, " Error renaming '" TEMP_NAME "' to '%s' (uh-oh)\n", filename);
+			if (rename(tempName, filename) != 0) {
+				fprintf(stderr, " Error renaming '%s' to '%s' (uh-oh)\n", tempName, filename);
 				goto exit;
 			}
 		}

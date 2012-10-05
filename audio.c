@@ -72,6 +72,20 @@
 	#define WRITE_D64	write_d64_le
 #endif
 
+static unsigned char pcm_guid[16] =
+{
+	/* (00000001-0000-0010-8000-00aa00389b71) */
+
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71
+};
+
+static unsigned char ieee_float_guid[16] =
+{
+	/* (00000003-0000-0010-8000-00aa00389b71) */
+
+	0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71
+};
+
 /* Define the supported formats here */
 input_format formats[] = {
 	{wav_id, 12, wav_open, wav_close, "wav", N_("WAV file reader")},
@@ -587,7 +601,7 @@ int wav_id(unsigned char *buf, int len)
 
 int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 {
-	unsigned char buf[16];
+	unsigned char buf[81];
 	Int64_t len;
 	Int64_t current_pos;
 	int samplesize;
@@ -614,21 +628,20 @@ int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 	 * in size.  This is incorrect, but not fatal, so we only warn about 
 	 * it instead of refusing to work with the file.  Please, if you
 	 * have a program that's creating format chunks of sizes other than
-	 * 16 or 18 bytes in size, report a bug to the author.
+	 * 16, 18 or 40 bytes in size, report a bug to the author.
+	 * (40 bytes accommodates WAVEFORMATEXTENSIBLE conforming files.)
 	 */
-	if (len != 16 && len != 18)
+	if (len != 16 && len != 18 && len != 40)
 		fprintf(stderr, "Warning: INVALID format chunk in wav header.\n"
 				" Trying to read anyway (may not work)...\n");
 
-	if (fread(buf, 1, 16, in) < 16) {
-		fprintf(stderr, "Warning: Unexpected EOF in reading WAV header (2)\n");
-		return 0;
-	}
-
 	/* Deal with stupid broken apps. Don't use these programs.
 	 */
-	if (len - 16 > 0 && !seek_forward(in, len - 16))
-	    return 0;
+	
+	if (fread(buf,1,len,in) < len) {
+		fprintf(stderr, "Warning: Unexpected EOF in reading WAV header\n");
+		return 0;
+	}
 
 	format.format =      READ_U16_LE(buf); 
 	format.channels =    READ_U16_LE(buf+2); 
@@ -667,26 +680,58 @@ int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 		FSEEK64(in, current_pos, SEEK_SET);
 	}
 
-	if (format.format == 1) {
-		samplesize = format.samplesize / 8;
+	if(format.format == WAVE_FORMAT_PCM) {
+		samplesize = format.samplesize/8;
 		opt->read_samples = wav_read;
 		/* works with current enum */
 		opt->format = samplesize;
 	}
-	else if (format.format == 3) {
+	else if(format.format == WAVE_FORMAT_IEEE_FLOAT) {
 		samplesize = 4;
 		opt->read_samples = wav_ieee_read;
 		opt->endianness = LITTLE;
 		opt->format = WAV_FMT_FLOAT;
 	}
+	else if (format.format == WAVE_FORMAT_EXTENSIBLE) {
+		format.channel_mask = READ_U32_LE(buf+20);
+		if (format.channel_mask != SPEAKER_FRONT_LEFT || format.channel_mask != (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT)) {
+			fprintf(stderr, "ERROR: Wav file is unsupported type (must be standard 1 or 2 channel PCM\n"
+					" or type 3 floating point PCM)(2)\n");
+			return 0;
+		}	
+		if (memcmp(buf+24, pcm_guid, 16) == 0) {
+			samplesize = format.samplesize/8;
+			opt->read_samples = wav_read;
+			/* works with current enum */
+			opt->format = samplesize;
+		}
+		else if (memcmp(buf+24, ieee_float_guid, 16) == 0) {
+			samplesize = 4;
+			opt->read_samples = wav_ieee_read;
+			opt->endianness = LITTLE;
+			opt->format = WAV_FMT_FLOAT;
+		}
+		else {
+			fprintf(stderr, "ERROR: Wav file is unsupported type (must be standard PCM\n"
+					" or type 3 floating point PCM)(2)\n");
+			return 0;
+		}
+	}
 	else {
 		fprintf(stderr, "ERROR: Wav file is unsupported type (must be standard PCM\n"
-				" or type 3 floating point PCM)\n");
+				" or type 3 floating point PCM\n");
 		return 0;
 	}
 
 	opt->samplesize = format.samplesize;
 
+	if(format.align != format.channels * samplesize) {
+		/* This is incorrect according to the spec. Warn loudly, then ignore
+		 * this value.
+		 */
+		fprintf(stderr, _("Warning: WAV 'block alignment' value is incorrect, ignoring.\n" 
+		    "The software that created this file is incorrect.\n"));
+	}
 	if ( format.align == format.channels * samplesize &&
 			format.samplesize == samplesize * 8 && 
 			(format.samplesize == 32 || format.samplesize == 24 ||

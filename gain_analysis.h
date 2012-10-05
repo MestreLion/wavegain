@@ -1,6 +1,6 @@
 /*
  *  ReplayGainAnalysis - analyzes input samples and give the recommended dB change
- *  Copyright (C) 2001 David Robinson and Glen Sawyer
+ *  Copyright (C) 2001-2009 David Robinson and Glen Sawyer
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,7 @@ typedef double  Float_t;         // Type used for filtering
 
 int     InitGainAnalysis ( long samplefreq );
 int     AnalyzeSamples   ( const Float_t* left_samples, const Float_t* right_samples, size_t num_samples, int num_channels );
-int	ResetSampleFrequency ( long samplefreq );
+int		ResetSampleFrequency ( long samplefreq );
 Float_t   GetTitleGain     ( void );
 Float_t   GetAlbumGain     ( void );
 

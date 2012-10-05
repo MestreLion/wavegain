@@ -162,7 +162,7 @@ int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
 {
 	FILE_LIST* file;
 	double     factor_clip,
-	           audiophile_gain,
+	           audiophile_gain = 0.,
 	           Gain,
 	           scale,
 	           dB,
@@ -347,7 +347,7 @@ int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
 static void usage(void)
 {
 	fprintf(stdout, _("WaveGain v" WAVEGAIN_VERSION " Compiled " __DATE__ ".\n"));
-	fprintf(stdout, _("Copyright (c) 2002-2005 John Edwards <john.edwards33@ntlworld.com>\n"));
+	fprintf(stdout, _("Copyright (c) 2002-2010 John Edwards <john.edwards33@ntlworld.com>\n"));
 	fprintf(stdout, _("Additional code by Magnus Holmgren, Gian-Carlo Pascutto, and Tycho\n\n"));
 #ifdef _WIN32
 	fprintf(stdout, " Usage: wavegain [options] input.wav [...] [-e cmd [args]]\n\n");
@@ -396,7 +396,7 @@ static void usage(void)
 	fprintf(stdout, "               4   for       dither with Heavy Noise Shaping.\n");
 	fprintf(stdout, "  -t, --limiter    Apply 6dB Hard Limiter to output.\n");
 	fprintf(stdout, "  -g, --gain X     Apply additional Manual Gain adjustment in decibels, where\n");
-	fprintf(stdout, "             X = any floating point number between -12.0 and +12.0.\n");
+	fprintf(stdout, "             X = any floating point number between -20.0 and +12.0.\n");
 	fprintf(stdout, "                   Clipping Prevention WILL be applied UNLESS '-n' is used.\n");
 	fprintf(stdout, "  -s, --fast       Calculates and prints gain settings - DOES NOT APPLY THEM.\n");
 	fprintf(stdout, "                   NOTE: This method does NOT process all samples, it only\n");
@@ -427,8 +427,9 @@ static void usage(void)
 #endif
 	fprintf(stdout, " INPUT FILES\n");
 	fprintf(stdout, "  WaveGain input files may be 8, 16, 24 or 32 bit integer, or floating point\n"); 
-	fprintf(stdout, "  wave files with 1 or 2 channels and a sample rate of 48000Hz, 44100Hz,\n");
-	fprintf(stdout, "  32000Hz, 24000Hz, 22050Hz, 16000Hz, 12000Hz, 11025Hz or 8000Hz.\n");
+	fprintf(stdout, "  wave files with 1 or 2 channels and a sample rate of 96000Hz, 88200Hz,\n");
+	fprintf(stdout, "  64000Hz, 48000Hz, 44100Hz, 32000Hz, 24000Hz, 22050Hz, 16000Hz, 12000Hz,\n");
+	fprintf(stdout, "  11025Hz or 8000Hz.\n");
 	fprintf(stdout, "  16 bit integer 'aiff' files are also supported.\n");
 	fprintf(stdout, "  Wildcards (?, *) can be used in the filename, or '-' for stdin.\n");
 
@@ -599,15 +600,15 @@ int main(int argc, char** argv)
 	    				fprintf(stderr, "Warning: manual gain %s not recognised, ignoring\n", optarg);
 					break;
 				}
-				if(settings.man_gain < -12.0) {
+				if(settings.man_gain < -20.0) {
 	    				fprintf(stderr, "Warning: manual gain %s is out of range, "
-					                 "applying gain of -12.0dB\n", optarg);
-					settings.man_gain = -12.0;
+					                 "applying gain of -20.0dB\n", optarg);
+					settings.man_gain = -20.0;
 				}
 				else if(settings.man_gain > 12.0) {
 	    				fprintf(stderr, "Warning: manual gain %s is out of range, "
 					                 "applying gain of +12.0dB\n", optarg);
-					settings.man_gain = -12.0;
+					settings.man_gain = 12.0;
 				}
 				break;
 			case 'b':
