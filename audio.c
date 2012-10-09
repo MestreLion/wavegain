@@ -54,6 +54,39 @@
 #include "i18n.h"
 #include "misc.h"
 
+/* Wrappers for mkstemp / _mktemp_s to a common API
+ * Always return an open file stream or NULL on error
+ */
+#ifdef _WIN32
+/* In Windows, _mktemp_s() simply returns a filename from template,
+ * so fopen is used. Note this is not race-safe!
+ * _mktemp_s() requires <io.h>
+ */
+FILE* fmkstemp(char *template) {
+	if (_mktemp_s(template, strlen(template)) == 0)
+		return fopen(template, "wb");
+	else
+		return NULL;
+}
+#else
+/* In POSIX, mkstemp() already opens a file, but not as a stream,
+ * so fdopen is used. This is race-safe.
+ * mkstemp() requires <stdlib.h>
+ * fdopen()  requires <stdio.h>
+ */
+#include <unistd.h>
+FILE* fmkstemp(char *template) {
+	int fd = mkstemp(template);
+	if (fd != -1)
+		return fdopen(fd, "wb");
+	else {
+		remove(template);
+		close(fd);
+		return NULL;
+	}
+}
+#endif
+
 /* Macros to read header data */
 #define READ_U32_LE(buf) \
 	(((buf)[3]<<24)|((buf)[2]<<16)|((buf)[1]<<8)|((buf)[0]&0xff))
@@ -961,7 +994,7 @@ audio_file *open_output_audio_file(char *infile, wavegain_opt *opt)
 #endif
 	}
 	else
-		aufile->sndfile = fopen(infile, "wb");
+		aufile->sndfile = fmkstemp(infile);
 
 	if (aufile->sndfile == NULL) {
 		if (aufile)
