@@ -23,6 +23,13 @@
 #include <time.h>
 #include <ctype.h>
 
+#ifndef _WIN32
+/* For handling file attributes (owner, group, permissions) */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #ifdef _WIN32
 #include <io.h>
 #include <process.h>
@@ -60,6 +67,10 @@
 #define ROUND64(x)   ( doubletmp = (x) + Dither.Add + (Int64_t)0x001FFFFD80000000LL, *(Int64_t*)(&doubletmp) - (Int64_t)0x433FFFFD80000000LL )
 #else
 #define ROUND64(x)   ( doubletmp = (x) + Dither.Add + (Int64_t)0x001FFFFD80000000L, *(Int64_t*)(&doubletmp) - (Int64_t)0x433FFFFD80000000L )
+#endif
+
+#ifndef _WIN32
+#define _snprintf snprintf
 #endif
 
 extern int          write_to_log;
@@ -387,9 +398,11 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 	double       wrap_prev_neg;
 	void         *sample_buffer;
 	input_format *format;
-	char         tempName[24] = "";
-	unsigned int serial;
-	char         tempSerial[7] = "";
+
+	char         template[] = ".tmp_XXXXXX";
+	int          tempSize = strlen(filename) + strlen(template) + 1;
+	char*        tempName = NULL;
+	struct stat  fst;
 
 	memset(wg_opts, 0, sizeof(wavegain_opt));
 
@@ -521,22 +534,16 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 		wg_opts->std_out = settings->std_out;
 
 		/* Create temp file name */
-                srand(time(NULL) ^ getpid());
-		serial = rand();
-#ifdef _WIN32
-		sprintf(tempSerial,  "%d", serial);
-		strcpy(tempName, TEMP_NAME);
-		strcat(tempName, tempSerial);
-#else
-		snprintf(tempSerial, 6, "%d", serial);
-		strncpy(tempName, TEMP_NAME, 17);
-		printf("tempName=%s tempSerial=%s\n", tempName, tempSerial);
-		strncat(tempName, tempSerial, 6);
-#endif		
+		if ((tempName = malloc(tempSize * sizeof(*tempName))) == NULL) {
+			fprintf(stderr, " Error allocating memory for output file name\n");
+			goto exit;
+		}
+		_snprintf(tempName, tempSize, "%s%s", filename, template);
+
 		aufile = open_output_audio_file(tempName, wg_opts);
 
 		if (aufile == NULL) {
-			fprintf (stderr, " Not able to open output file %s.\n", TEMP_NAME);
+			fprintf (stderr, " Not able to open output file %s.\n", tempName);
 			fclose(infile);
 			goto exit;
 		}
@@ -655,11 +662,24 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 		fclose(infile);
 
 		if (!settings->std_out) {
+#ifdef _WIN32
+			/* WIN32's rename(temp, original) does not allow original to exist,
+			 * so we must remove() it first. Ideally, there should be a way
+			 * to remove+rename in a single, atomic function, so if either one
+			 * fails, the original file is preserved.
+			 */
 			if (remove(filename) != 0) {
 				fprintf(stderr, " Error deleting old file '%s'\n", filename);
 				goto exit;
 			}
-    
+#endif
+#ifndef _WIN32
+			/* copy owner, group, permissions from original to output */
+			stat(filename, &fst);
+			chown(tempName, fst.st_uid, -1);
+			chown(tempName, -1 ,fst.st_gid);
+			chmod(tempName, fst.st_mode);
+#endif
 			if (rename(tempName, filename) != 0) {
 				fprintf(stderr, " Error renaming '%s' to '%s' (uh-oh)\n", tempName, filename);
 				goto exit;
@@ -668,6 +688,7 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 		result = 1;
 	}
 exit:
+	if(tempName) free(tempName);
 	return result;
 }
 
