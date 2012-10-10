@@ -114,13 +114,13 @@ typedef signed int      Int32_t;
 #define YULE_FILTER     filterYule
 #define BUTTER_FILTER   filterButter
 #define RMS_PERCENTILE      0.95        // percentile which is louder than the proposed level
-#define MAX_SAMP_FREQ   96000.          // maximum allowed sample frequency [Hz]
-#define RMS_WINDOW_TIME     0.050       // Time slice size [s]
-#define STEPS_per_dB      100.          // Table entries per dB
-#define MAX_dB            120.          // Table entries for 0...MAX_dB (normal max. values are 70...80 dB)
+#define MAX_SAMP_FREQ   96000           // maximum allowed sample frequency [Hz]
+#define RMS_WINDOW_TIME    20           // Time slice size [1/s]
+#define STEPS_per_dB      100           // Table entries per dB
+#define MAX_dB            120           // Table entries for 0...MAX_dB (normal max. values are 70...80 dB)
 
 #define MAX_ORDER               (BUTTER_ORDER > YULE_ORDER ? BUTTER_ORDER : YULE_ORDER)
-#define MAX_SAMPLES_PER_WINDOW  (size_t) (MAX_SAMP_FREQ * RMS_WINDOW_TIME + 1)      // max. Samples per Time slice
+#define MAX_SAMPLES_PER_WINDOW  (size_t) (MAX_SAMP_FREQ / RMS_WINDOW_TIME + 1)      // max. Samples per Time slice
 #define PINK_REF                64.82 //298640883795                              // calibration value
 
 Float_t          linprebuf [MAX_ORDER * 2];
@@ -145,8 +145,8 @@ double           rsum;
 #endif
 int              freqindex;
 int              first;
-static Uint32_t  A [(size_t)(STEPS_per_dB * MAX_dB)];
-static Uint32_t  B [(size_t)(STEPS_per_dB * MAX_dB)];
+static Uint32_t  A [STEPS_per_dB * MAX_dB];
+static Uint32_t  B [STEPS_per_dB * MAX_dB];
 
 // for each filter:
 // [0] 48 kHz, [1] 44.1 kHz, [2] 32 kHz, [3] 24 kHz, [4] 22050 Hz, [5] 16 kHz, [6] 12 kHz, [7] is 11025 Hz, [8] 8 kHz
@@ -374,7 +374,7 @@ ResetSampleFrequency ( long samplefreq ) {
         default:    return INIT_GAIN_ANALYSIS_ERROR;
     }
 
-    sampleWindow = (int) ceil (samplefreq * RMS_WINDOW_TIME);
+    sampleWindow = (int) ceil (samplefreq / RMS_WINDOW_TIME);
 
 #ifdef HAVE_SSE2
     lrsum = _mm_setzero_pd();
@@ -591,9 +591,9 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
 #ifdef HAVE_SSE2
             _mm_store_pd (__temp2, lrsum);
 
-            val = STEPS_per_dB * 10. * log10 ( (__temp2[0]+__temp2[1]) / totsamp * 0.5 + 1.e-37 );
+            val = (Float_t)STEPS_per_dB * 10. * log10 ( (__temp2[0]+__temp2[1]) / totsamp * 0.5 + 1.e-37 );
 #else
-            val  = STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
+            val = (Float_t)STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
 #endif
             ival = (int) val;
             if ( ival <                     0 ) ival = 0;
