@@ -163,13 +163,13 @@ typedef struct
 audio_file *open_output_audio_file(char *infile, wavegain_opt *opt);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(FILE *in, audio_file *aufile, wavegain_opt *opt);
-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size);
-static int write_aiff_header(audio_file *aufile);
-static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
-static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
-static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
-static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
-static int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples);
+int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size);
+int write_aiff_header(audio_file *aufile);
+int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples);
 void* output_to_PCM(double **input, void *samplebuffer, int channels, int samples, int format);
 
 #ifdef __cplusplus

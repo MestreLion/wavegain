@@ -389,7 +389,6 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 	audio_file   *aufile;
 	int          readcount,
 	             result = 0,
-	             delete_temp = 0,
 	             i;
 	double       Gain;
 	double       scale;
