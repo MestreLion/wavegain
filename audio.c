@@ -54,6 +54,39 @@
 #include "i18n.h"
 #include "misc.h"
 
+/* Wrappers for mkstemp / _mktemp_s to a common API
+ * Always return an open file stream or NULL on error
+ */
+#ifdef _WIN32
+/* In Windows, _mktemp_s() simply returns a filename from template,
+ * so fopen is used. Note this is not race-safe!
+ * _mktemp_s() requires <io.h>
+ */
+FILE* fmkstemp(char *template) {
+	if (_mktemp_s(template, strlen(template)) == 0)
+		return fopen(template, "wb");
+	else
+		return NULL;
+}
+#else
+/* In POSIX, mkstemp() already opens a file, but not as a stream,
+ * so fdopen is used. This is race-safe.
+ * mkstemp() requires <stdlib.h>
+ * fdopen()  requires <stdio.h>
+ */
+#include <unistd.h>
+FILE* fmkstemp(char *template) {
+	int fd = mkstemp(template);
+	if (fd != -1)
+		return fdopen(fd, "wb");
+	else {
+		remove(template);
+		close(fd);
+		return NULL;
+	}
+}
+#endif
+
 /* Macros to read header data */
 #define READ_U32_LE(buf) \
 	(((buf)[3]<<24)|((buf)[2]<<16)|((buf)[1]<<8)|((buf)[0]&0xff))
@@ -380,6 +413,7 @@ static int find_wav_chunk(FILE *in, char *type, Int64_t *len)
 			return 1;
 		}
 	}
+	return 0; /* unreachable */
 }
 
 static int find_gain_chunk(FILE *in, Int64_t *len)
@@ -423,6 +457,7 @@ static int find_aiff_chunk(FILE *in, char *type, unsigned int *len)
 		else
 			return 1;
 	}
+	return 0; /* unreachable */
 }
 
 
@@ -587,14 +622,12 @@ int aiff_open(FILE *in, wavegain_opt *opt, unsigned char *buf, int buflen)
 
 int wav_id(unsigned char *buf, int len)
 {
-	unsigned int flen;
-	
+	/*unsigned int flen = READ_U32_LE(buf + 4);*/ /* We don't use this */;
+
 	if (len < 12) return 0; /* Something screwed up */
 
 	if (memcmp(buf, "RIFF", 4))
 		return 0; /* Not wave */
-
-	flen = READ_U32_LE(buf + 4); /* We don't use this */
 
 	if (memcmp(buf + 8, "WAVE",4))
 		return 0; /* RIFF, but not wave */
@@ -961,7 +994,7 @@ audio_file *open_output_audio_file(char *infile, wavegain_opt *opt)
 #endif
 	}
 	else
-		aufile->sndfile = fopen(infile, "wb");
+		aufile->sndfile = fmkstemp(infile);
 
 	if (aufile->sndfile == NULL) {
 		if (aufile)
@@ -1065,7 +1098,7 @@ void close_audio_file( FILE *in, audio_file *aufile, wavegain_opt *opt)
 #define WRITE_U16(buf, x) *(buf)     = (unsigned char)((x)&0xff);\
                           *((buf)+1) = (unsigned char)(((x)>>8)&0xff);
 
-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size)
+int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size)
 {
 	unsigned short channels    = opt->channels;
 	unsigned long samplerate   = opt->rate;
@@ -1212,7 +1245,7 @@ static unsigned char* Convert_to_80bit_BE_IEEE854_Float(unsigned char* p, long d
     return p;
 }
 
-static int write_aiff_header(audio_file *aufile)
+int write_aiff_header(audio_file *aufile)
 {
 	unsigned char   header[54],
 	                        *p = header;
@@ -1292,7 +1325,7 @@ static int write_aiff_header(audio_file *aufile)
 	return fwrite(header, sizeof(header), 1, aufile->sndfile);
 }
 
-static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
 {
 	int              ret;
 	unsigned int     i;
@@ -1312,7 +1345,7 @@ static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned in
 	return ret;
 }
 
-static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
 {
 	int          ret;
 	unsigned int i;
@@ -1346,7 +1379,7 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned i
 	return ret;
 }
 
-static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
 {
 	int          ret;
 	unsigned int i;
@@ -1369,7 +1402,7 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned i
 	return ret;
 }
 
-static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
 {
 	int          ret;
 	unsigned int i;
@@ -1393,7 +1426,7 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned i
 	return ret;
 }
 
-static int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples)
+int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples)
 {
 	int           ret;
 	unsigned int  i;

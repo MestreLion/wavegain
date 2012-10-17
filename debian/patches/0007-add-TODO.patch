@@ -1,0 +1,23 @@
+From da911d9df759b5c83071d7877e8025fcf37a505e Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Wed, 17 Oct 2012 06:34:47 -0300
+Subject: add TODO
+
+---
+ TODO |    7 +++++++
+ 1 file changed, 7 insertions(+)
+ create mode 100644 TODO
+
+diff --git a/TODO b/TODO
+new file mode 100644
+index 0000000..0b153c8
+--- /dev/null
++++ b/TODO
+@@ -0,0 +1,7 @@
++- Bugfix: percentages sometimes show > 100% done
++- Bugfix: investigate calculated RG gain when --gain and DC correction is used,
++   also how these are affected by --limiter, --noclip, etc
++- Fix --help linux issues (copyright at bottom, * ? as Wildcard)
++   if possible, make it convertable to nroff (man page) and/or html (manual),
++   so the 3 are always in sync
++- Standard license/copyright headers in all sources

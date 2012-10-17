@@ -1,0 +1,313 @@
+From fe1e169651013308f307ecc1949fb37ada4dff9c Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Fri, 5 Oct 2012 05:46:36 -0300
+Subject: add manual
+
+Taken from Windows binary package, updated and cleaned up html markup
+---
+ doc/manual/image001.png |  Bin 0 -> 2824 bytes
+ doc/manual/index.html   |  233 +++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 233 insertions(+)
+ create mode 100644 doc/manual/image001.png
+ create mode 100644 doc/manual/index.html
+
+diff --git a/doc/manual/image001.png b/doc/manual/image001.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..f91c8fac2eecdd43bc2038dcc2955db30258fbbd
+GIT binary patch
+literal 2824
+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
+G_5TA9>_Er>
+
+literal 0
+HcmV?d00001
+
+diff --git a/doc/manual/index.html b/doc/manual/index.html
+new file mode 100644
+index 0000000..8d264ba
+--- /dev/null
++++ b/doc/manual/index.html
+@@ -0,0 +1,233 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
++<HTML>
++<HEAD>
++<TITLE>WaveGain v1.3.1</TITLE>
++</HEAD>
++<BODY>
++<H1>WaveGain v1.3.1</H2>
++<P>
++WaveGain is an application of the ReplayGain algorithms to standard PCM wave
++files. Calculated gain adjustments are applied directly to the audio data,
++instead of just writing metadata as traditionally done for other formats
++like MP3, FLAC and Ogg Vorbis.
++<P>
++The replaygain values can also be added as metadata in a custom RIFF chunk named
++'gain'. This could theoretically allow WAV files to have same lossless
++functionality as other formats where audio data is not altered. But since no
++current players are aware of this "standard" the metadata is used only by
++WaveGain, for the "undo" feature.
++<P>
++Therefore, in the strictest meaning of the word, this process is NOT lossless.
++However, with the application of dithering to the output, the losses can be
++minimized and are, in any event, unlikely to be audible to the human ear.
++<P>
++So in simple terms, the program reads in wave files, analyses them, calculates
++and displays recommended gain adjustments (track and album), and then applies
++the adjustments directly to the wave data, if requested.
++
++<H2>Usage</H2>
++
++<B>wavegain</B> [<I>OPTIONS</I>] <I>FILE...</I>
++<BR>
++<B>wavegain</B> [<I>OPTIONS</I>] <I>FILE...</I> [-e CMD [ARG...]] <I>(Windows only)</I>
++
++<H2>Options</H2>
++
++<P>
++<DL COMPACT>
++<DT><B>-h, --help</B>
++
++<DD>
++Print the help information.
++<P>
++<P>
++<DT><B>-c, --calculate</B>
++
++<DD>
++Calculate and print gain settings and DC Offsets, but not do not apply them
++(DEFAULT)
++<P>
++<P>
++<DT><B>-s, --fast</B>
++
++<DD>
++Similar to --calculate, but only only analyzes 8,192,000 samples per file.
++Results will not be as accurate as a full analysis but with most material will
++be within +/- 0.5db.
++<BR>
++
++DC Offset will not be calculated.
++<P>
++<DT><B>-y, --apply</B>
++
++<DD>
++Calculates and applies gain settings and DC Offset correction.
++<P>
++<P>
++<DT><B>-r, --radio</B>
++
++<DD>
++When used with --apply, use ReplayGain Radio/Single Track gain setting (DEFAULT)
++<P>
++Analyses the ReplayGain values for each of the tracks (files) specified on an
++individual basis.
++<P>
++<P>
++<DT><B>-a, --album</B>
++
++<DD>
++When used with --apply, use ReplayGain Album/Audiophile gain setting.
++<P>
++Analyses the ReplayGain values for each of the tracks (files) specified and
++collectively for the whole selection. The album gain value, if applied, ensures
++that all tracks are adjusted by the same scaling factor and so retain the same
++relative level of loudness.
++<P>
++<P>
++<DT><B>-q, --adc</B>
++
++<DD>
++When used with --apply, apply Album-based DC Offset correction.
++The default is to apply Track-based DC Offset correction.
++<P>
++<P>
++<DT><B>-p, --no_offset</B>
++
++<DD>
++Do not apply any DC Offset correction.
++<P>
++<P>
++<DT><B>-x, --scale</B>
++
++<DD>
++Write scale values to stdout in the format: n.nnnnnn
++<BR>In Album mode it only writes the Album Scale value, and
++in Title mode it only writes the Title Scale values.
++<BR>Only works with --calculate (calculation-only mode)
++<P>
++<P>
++<DT><B>-w, --write</B>
++
++<DD>
++When used with --apply, additionally write a 'gain' chunk into the Wave Header,
++storing the scalefactor applied to the wave data as a double floating point number.
++<BR>
++
++This header is required for the '--undo-gain' feature, and its presence will
++also will also skip future re-processing of the affected file(s), unless '--force' is used.
++<P>
++<P>
++<DT><B>--force</B>
++
++<DD>
++Force the reprocessing of a file even if it contains a that contains a 'gain' chunk
++(previously created using --write)
++<P>
++<P>
++<DT><B>--undo-gain</B>
++
++<DD>
++Read the scalefactor in the 'gain' chunk and uses the value to reverse the
++previously applied gain. This will not recreate a bit identical version of the
++original file, but it will be rescaled to the original level.
++<P>
++<P>
++<DT><B>-z, --recursive</B>
++
++<DD>
++Search for files recursively, treating each folder as a distinct <I>album</I>
++<P>
++<P>
++<DT><B>-l, --log</B>
++
++<DD>
++Write a log file. (Default filename = WGLog.txt)
++<P>
++<P>
++<DT><B>-f, --logfile</B>
++
++<DD>
++Specify log filename. Assumes --log
++<P>
++<P>
++<DT><B>-n, --noclip</B>
++
++<DD>
++Do not prevent clipping. The default is to prevent clipping.
++<P>
++<P>
++<DT><B>-d</B><I>x</I><B>, --dither=</B><I>x</I>
++
++<DD>
++Dither output, where <I>x</I> is:
++
++<BR><B>0</B> for dither OFF (default).
++<BR><B>1</B> for dither without Noise Shaping.
++<BR><B>2</B> for dither with Light  Noise Shaping.
++<BR><B>3</B> for dither with Medium Noise Shaping.
++<BR><B>4</B> for dither with Heavy  Noise Shaping.
++<P>
++Whenever the values of samples are altered, it is advisable, as a final stage before writing out, to apply <I>dithering</I> to the amended values. This process aids in preserving information in the low order bits that would otherwise be lost. In some cases, the application of <I>noise shaping</I> also aids this process. (I am not including any detail of the <I>whys/wherefores</I> or <I>hows</I> here as there are sources of information on the web that cover these far more eloquently and capably than I would be able to provide!) If the output is to be used for subsequent processing such as encoding to a lossy format, then dithering is not recommended. If dithering is applied, it should be in the last stage of processing.
++<P>
++<DT><B>-t, --limiter</B>
++
++<DD>
++Apply 6dB Hard Limiter to output.
++<P>
++This option would normally be expected to be used in conjunction with --gain, when an increase in the recommended gain is required. 
++<P>
++<DT><B>-g</B><I>x</I><B>, --gain=</B><I>x</I>
++
++<DD>
++Apply additional Manual Gain adjustment in decibels, where <I>x</I> is any floating point number between <B>-20.0</B> and <B>+12.0</B>
++<BR>
++Clipping Prevention will be applied by default unless --noclip is used.
++<P>
++Normally used in conjunction with the --limiter when an increase in gain is to be applied. This gain figure below is added to the value recommended by the ReplayGain calculation. Where an increase in gain is required, application of the hard limiter provides a smooth compression of the peaks and troughs rather than simply applying a crude hard cutoff at full peak scale.
++<BR><img src="image001.png">
++<P>
++<P>
++
++<DT><B>-o, --stdout</B>
++
++<DD>
++Write output file to stdout.
++<P>
++<DT><B>-b<I>x</I>, --bits=<I>x</I></B>
++
++<DD>
++Set output sample format, where <I><B>x</B></I> is:
++
++<BR><B>1</B> for  8-bit unsigned PCM data.
++<BR><B>2</B> for 16-bit signed PCM data
++<BR><B>3</B> for 24-bit signed PCM data.
++<BR><B>4</B> for 32-bit signed PCM data.
++<BR><B>5</B> for 32-bit floats.
++<BR><B>6</B> for 16-bit 'aiff' format.
++<P>
++By default, the output file will be of the same bitwidth and type as the input file.
++<P>
++<P>
++
++<DT><B>-e, --exec <I>Cmd [Args]</I></B> <I>(Windows only)</I>
++<DD>
++Execute a command after WaveGain.
++The following environment variables are available:
++INPUT_FILE, INPUT_FDIR, INPUT_RDIR, INPUT_NAME,
++TRACK_GAIN, TRACK_PEAK, TRACK_SCALE, TRACK_NEW_PEAK,
++ALBUM_GAIN, ALBUM_PEAK, ALBUM_SCALE, ALBUM_NEW_PEAK,
++DC_OFFSET_L, DC_OFFSET_R.
++
++</DL>
++
++<H2>Input Files</H2>
++
++WaveGain input files may be 8, 16, 24 or 32 bit integer, or floating point
++wave files with 1 or 2 channels and a sample rate of 96000Hz, 88200Hz,
++64000Hz, 48000Hz, 44100Hz, 32000Hz, 24000Hz, 22050Hz, 16000Hz, 12000Hz,
++11025Hz or 8000Hz. 16 bit integer 'aiff' files are also supported.
++<P>
++Use '-' as filename for stdin input.
++<P>
++</BODY>
++</HTML>

@@ -5,7 +5,6 @@
 #define WAVEGAIN_VERSION "1.3.1"
 
 #define BUFFER_LEN  16384
-#define TEMP_NAME "wavegain.tmp"
 #define LOG_NAME "WGLog.txt"
 
 #define NO_GAIN -10000.f

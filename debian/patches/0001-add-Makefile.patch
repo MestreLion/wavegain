@@ -1,0 +1,60 @@
+From 9e22f121a62e7de0f5b778fe396bf6d807c8bd5d Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Fri, 5 Oct 2012 05:24:25 -0300
+Subject: add Makefile
+
+With the following targets:
+all       - alias for 'release'
+debug     - to build an executable with debugging symbols and warnings
+release   - to build an stripped, optimized executable. Only default warnings
+clean     - to remove files created by build (debug or release)
+distclean - alias for 'clean'
+install   - to build (if needed) and installing. Default prefix is /usr/local
+uninstall - to remove files installed by install
+sage for your changes. Lines starting
+---
+ Makefile |   35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 Makefile
+
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..7f80b00
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,35 @@
++SHELL    = /bin/sh
++CC       = gcc
++
++TARGET   = wavegain
++DEFS     = -DHAVE_CONFIG_H
++LIBS     = -lm
++SOURCES  = $(shell echo *.c)
++HEADERS  = $(shell echo *.h)
++
++prefix   = /usr/local
++bindir   = $(prefix)/bin
++
++all: release
++
++debug: CFLAGS += -g -O0 -Wall -Wextra
++debug: clean $(TARGET)
++
++release: CFLAGS += -s
++release: clean $(TARGET)
++
++$(TARGET): $(SOURCES) $(HEADERS)
++	$(CC) $(CFLAGS) $(DEFS) -o $(TARGET) $(SOURCES) $(LIBS)
++
++install: $(TARGET)
++	install -s -D $(TARGET) $(DESTDIR)$(bindir)/$(TARGET)
++
++uninstall:
++	rm -f $(DESTDIR)$(bindir)/$(TARGET)
++
++clean:
++	rm -f $(TARGET)
++
++distclean: clean
++
++.PHONY : all debug release install uninstall clean distclean

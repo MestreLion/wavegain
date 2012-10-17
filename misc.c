@@ -39,7 +39,7 @@ void file_error(const char* message, ...)
 	vfprintf(stderr, message, args);
 	va_end(args);
 
-	fprintf(stderr, strerror(err_num));
+	fprintf(stderr, "%s", strerror(err_num));
 	fprintf(stderr, "\n");
 }
 

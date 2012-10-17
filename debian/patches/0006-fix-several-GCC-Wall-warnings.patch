@@ -1,0 +1,174 @@
+From 7aa6cd896b0c3ab62f6c35dd23b8a2fef4cdb396 Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Tue, 16 Oct 2012 21:30:15 -0300
+Subject: fix several GCC -Wall warnings
+
+---
+ audio.c    |   22 +++++++++++-----------
+ audio.h    |   14 +++++++-------
+ main.c     |    4 +++-
+ wavegain.c |    1 -
+ 4 files changed, 21 insertions(+), 20 deletions(-)
+
+diff --git a/audio.c b/audio.c
+index 82d4b6a..1302ca6 100644
+--- a/audio.c
++++ b/audio.c
+@@ -413,6 +413,7 @@ static int find_wav_chunk(FILE *in, char *type, Int64_t *len)
+ 			return 1;
+ 		}
+ 	}
++	return 0; /* unreachable */
+ }
+ 
+ static int find_gain_chunk(FILE *in, Int64_t *len)
+@@ -456,6 +457,7 @@ static int find_aiff_chunk(FILE *in, char *type, unsigned int *len)
+ 		else
+ 			return 1;
+ 	}
++	return 0; /* unreachable */
+ }
+ 
+ 
+@@ -620,15 +622,13 @@ int aiff_open(FILE *in, wavegain_opt *opt, unsigned char *buf, int buflen)
+ 
+ int wav_id(unsigned char *buf, int len)
+ {
+-	unsigned int flen;
+-	
++	/*unsigned int flen = READ_U32_LE(buf + 4);*/ /* We don't use this */;
++
+ 	if (len < 12) return 0; /* Something screwed up */
+ 
+ 	if (memcmp(buf, "RIFF", 4))
+ 		return 0; /* Not wave */
+ 
+-	flen = READ_U32_LE(buf + 4); /* We don't use this */
+-
+ 	if (memcmp(buf + 8, "WAVE",4))
+ 		return 0; /* RIFF, but not wave */
+ 
+@@ -1098,7 +1098,7 @@ void close_audio_file( FILE *in, audio_file *aufile, wavegain_opt *opt)
+ #define WRITE_U16(buf, x) *(buf)     = (unsigned char)((x)&0xff);\
+                           *((buf)+1) = (unsigned char)(((x)>>8)&0xff);
+ 
+-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size)
++int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size)
+ {
+ 	unsigned short channels    = opt->channels;
+ 	unsigned long samplerate   = opt->rate;
+@@ -1245,7 +1245,7 @@ static unsigned char* Convert_to_80bit_BE_IEEE854_Float(unsigned char* p, long d
+     return p;
+ }
+ 
+-static int write_aiff_header(audio_file *aufile)
++int write_aiff_header(audio_file *aufile)
+ {
+ 	unsigned char   header[54],
+ 	                        *p = header;
+@@ -1325,7 +1325,7 @@ static int write_aiff_header(audio_file *aufile)
+ 	return fwrite(header, sizeof(header), 1, aufile->sndfile);
+ }
+ 
+-static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
++int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+ {
+ 	int              ret;
+ 	unsigned int     i;
+@@ -1345,7 +1345,7 @@ static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned in
+ 	return ret;
+ }
+ 
+-static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
++int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+ {
+ 	int          ret;
+ 	unsigned int i;
+@@ -1379,7 +1379,7 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned i
+ 	return ret;
+ }
+ 
+-static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
++int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+ {
+ 	int          ret;
+ 	unsigned int i;
+@@ -1402,7 +1402,7 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned i
+ 	return ret;
+ }
+ 
+-static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
++int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples)
+ {
+ 	int          ret;
+ 	unsigned int i;
+@@ -1426,7 +1426,7 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned i
+ 	return ret;
+ }
+ 
+-static int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples)
++int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples)
+ {
+ 	int           ret;
+ 	unsigned int  i;
+diff --git a/audio.h b/audio.h
+index 41d3207..efd10e2 100644
+--- a/audio.h
++++ b/audio.h
+@@ -163,13 +163,13 @@ typedef struct
+ audio_file *open_output_audio_file(char *infile, wavegain_opt *opt);
+ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
+ void close_audio_file(FILE *in, audio_file *aufile, wavegain_opt *opt);
+-static int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size);
+-static int write_aiff_header(audio_file *aufile);
+-static int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+-static int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+-static int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+-static int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
+-static int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples);
++int write_wav_header(audio_file *aufile, wavegain_opt *opt, Int64_t file_size);
++int write_aiff_header(audio_file *aufile);
++int write_audio_8bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
++int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
++int write_audio_24bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
++int write_audio_32bit(audio_file *aufile, void *sample_buffer, unsigned int samples);
++int write_audio_float(audio_file *aufile, void *sample_buffer, unsigned int samples);
+ void* output_to_PCM(double **input, void *samplebuffer, int channels, int samples, int format);
+ 
+ #ifdef __cplusplus
+diff --git a/main.c b/main.c
+index 9b77a98..91ecb81 100644
+--- a/main.c
++++ b/main.c
+@@ -437,7 +437,7 @@ static void usage(void)
+ }
+ 
+ 
+-const static struct option long_options[] = {
++static const struct option long_options[] = {
+ 	{"help",	0, NULL, 'h'},
+ 	{"album",	0, NULL, 'a'},
+ 	{"radio",	0, NULL, 'r'},
+@@ -483,8 +483,10 @@ int main(int argc, char** argv)
+ 	         i,
+ 	         bits;
+ 
++#ifdef _WIN32
+  	char     CmdDir[MAX_PATH];
+  	char     *p;
++#endif
+ 
+ 	memset(&settings, 0, sizeof(settings));
+ 	settings.first_file = 1;
+diff --git a/wavegain.c b/wavegain.c
+index 97abc32..5725f0b 100644
+--- a/wavegain.c
++++ b/wavegain.c
+@@ -389,7 +389,6 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+ 	audio_file   *aufile;
+ 	int          readcount,
+ 	             result = 0,
+-	             delete_temp = 0,
+ 	             i;
+ 	double       Gain;
+ 	double       scale;

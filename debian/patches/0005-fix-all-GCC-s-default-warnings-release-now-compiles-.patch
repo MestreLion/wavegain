@@ -1,0 +1,78 @@
+From b245afab544fc8809ab3d5f6ade951d869b59ba7 Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Wed, 10 Oct 2012 08:46:13 -0300
+Subject: fix all GCC's default warnings, release now compiles cleanly
+
+---
+ gain_analysis.c |   20 ++++++++++----------
+ misc.c          |    2 +-
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/gain_analysis.c b/gain_analysis.c
+index 9bd93da..42455cf 100644
+--- a/gain_analysis.c
++++ b/gain_analysis.c
+@@ -114,13 +114,13 @@ typedef signed int      Int32_t;
+ #define YULE_FILTER     filterYule
+ #define BUTTER_FILTER   filterButter
+ #define RMS_PERCENTILE      0.95        // percentile which is louder than the proposed level
+-#define MAX_SAMP_FREQ   96000.          // maximum allowed sample frequency [Hz]
+-#define RMS_WINDOW_TIME     0.050       // Time slice size [s]
+-#define STEPS_per_dB      100.          // Table entries per dB
+-#define MAX_dB            120.          // Table entries for 0...MAX_dB (normal max. values are 70...80 dB)
++#define MAX_SAMP_FREQ   96000           // maximum allowed sample frequency [Hz]
++#define RMS_WINDOW_TIME    20           // Time slice size [1/s]
++#define STEPS_per_dB      100           // Table entries per dB
++#define MAX_dB            120           // Table entries for 0...MAX_dB (normal max. values are 70...80 dB)
+ 
+ #define MAX_ORDER               (BUTTER_ORDER > YULE_ORDER ? BUTTER_ORDER : YULE_ORDER)
+-#define MAX_SAMPLES_PER_WINDOW  (size_t) (MAX_SAMP_FREQ * RMS_WINDOW_TIME + 1)      // max. Samples per Time slice
++#define MAX_SAMPLES_PER_WINDOW  (size_t) (MAX_SAMP_FREQ / RMS_WINDOW_TIME + 1)      // max. Samples per Time slice
+ #define PINK_REF                64.82 //298640883795                              // calibration value
+ 
+ Float_t          linprebuf [MAX_ORDER * 2];
+@@ -145,8 +145,8 @@ double           rsum;
+ #endif
+ int              freqindex;
+ int              first;
+-static Uint32_t  A [(size_t)(STEPS_per_dB * MAX_dB)];
+-static Uint32_t  B [(size_t)(STEPS_per_dB * MAX_dB)];
++static Uint32_t  A [STEPS_per_dB * MAX_dB];
++static Uint32_t  B [STEPS_per_dB * MAX_dB];
+ 
+ // for each filter:
+ // [0] 48 kHz, [1] 44.1 kHz, [2] 32 kHz, [3] 24 kHz, [4] 22050 Hz, [5] 16 kHz, [6] 12 kHz, [7] is 11025 Hz, [8] 8 kHz
+@@ -374,7 +374,7 @@ ResetSampleFrequency ( long samplefreq ) {
+         default:    return INIT_GAIN_ANALYSIS_ERROR;
+     }
+ 
+-    sampleWindow = (int) ceil (samplefreq * RMS_WINDOW_TIME);
++    sampleWindow = (int) ceil (samplefreq / RMS_WINDOW_TIME);
+ 
+ #ifdef HAVE_SSE2
+     lrsum = _mm_setzero_pd();
+@@ -591,9 +591,9 @@ AnalyzeSamples ( const Float_t* left_samples, const Float_t* right_samples, size
+ #ifdef HAVE_SSE2
+             _mm_store_pd (__temp2, lrsum);
+ 
+-            val = STEPS_per_dB * 10. * log10 ( (__temp2[0]+__temp2[1]) / totsamp * 0.5 + 1.e-37 );
++            val = (Float_t)STEPS_per_dB * 10. * log10 ( (__temp2[0]+__temp2[1]) / totsamp * 0.5 + 1.e-37 );
+ #else
+-            val  = STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
++            val = (Float_t)STEPS_per_dB * 10. * log10 ( (lsum+rsum) / totsamp * 0.5 + 1.e-37 );
+ #endif
+             ival = (int) val;
+             if ( ival <                     0 ) ival = 0;
+diff --git a/misc.c b/misc.c
+index d1d9c81..278d8b2 100644
+--- a/misc.c
++++ b/misc.c
+@@ -39,7 +39,7 @@ void file_error(const char* message, ...)
+ 	vfprintf(stderr, message, args);
+ 	va_end(args);
+ 
+-	fprintf(stderr, strerror(err_num));
++	fprintf(stderr, "%s", strerror(err_num));
+ 	fprintf(stderr, "\n");
+ }
+ 

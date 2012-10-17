@@ -1,0 +1,210 @@
+From 6c49eaa6799857221382c7504e1a674c73fb6b89 Mon Sep 17 00:00:00 2001
+From: MestreLion <linux@rodrigosilva.com>
+Date: Tue, 9 Oct 2012 01:12:40 -0300
+Subject: create output tempfile in a secure way and in same directory as
+ original
+
+This prevents a number of issues:
+
+- remove(new) should not be used prior to rename(old, new) in POSIX C. If it
+  fails, the original file was be lost. And a very common way for rename() to
+  fail is when tempfile and original file are on different mountpoints / drives
+- current dir (or more likely, executable dir) can be read-only, so tempfile
+  must not be created there. This is certainly true for POSIX/Linux installs.
+- tempfile must have a secure (ie, random and unique) name, and must be opened
+  atomically to avoid race conditions.
+
+And add some benefits:
+
+- Each original file has its own tempfile, in the same dir, with a matching name
+  This is very convenient to the user as if any error aborts processing, he
+  still can access the result.
+- Original files (and their directories) must be writable anyway, so it is a
+  sensible choice.
+- For Linux, all file operations are atomic and race-safe
+
+Also, in POSIX, try to preserve input file's owner, group and permissions after
+applying gain.
+
+Since all output is first written to a temporary file, which may be created
+with different fstat values than the original, these values must be saved and
+then restored after tempfile is copied over the original.
+---
+ audio.c    |   35 ++++++++++++++++++++++++++++++++++-
+ main.h     |    1 -
+ wavegain.c |   55 ++++++++++++++++++++++++++++++++++++++-----------------
+ 3 files changed, 72 insertions(+), 19 deletions(-)
+
+diff --git a/audio.c b/audio.c
+index ee667d1..82d4b6a 100644
+--- a/audio.c
++++ b/audio.c
+@@ -54,6 +54,39 @@
+ #include "i18n.h"
+ #include "misc.h"
+ 
++/* Wrappers for mkstemp / _mktemp_s to a common API
++ * Always return an open file stream or NULL on error
++ */
++#ifdef _WIN32
++/* In Windows, _mktemp_s() simply returns a filename from template,
++ * so fopen is used. Note this is not race-safe!
++ * _mktemp_s() requires <io.h>
++ */
++FILE* fmkstemp(char *template) {
++	if (_mktemp_s(template, strlen(template)) == 0)
++		return fopen(template, "wb");
++	else
++		return NULL;
++}
++#else
++/* In POSIX, mkstemp() already opens a file, but not as a stream,
++ * so fdopen is used. This is race-safe.
++ * mkstemp() requires <stdlib.h>
++ * fdopen()  requires <stdio.h>
++ */
++#include <unistd.h>
++FILE* fmkstemp(char *template) {
++	int fd = mkstemp(template);
++	if (fd != -1)
++		return fdopen(fd, "wb");
++	else {
++		remove(template);
++		close(fd);
++		return NULL;
++	}
++}
++#endif
++
+ /* Macros to read header data */
+ #define READ_U32_LE(buf) \
+ 	(((buf)[3]<<24)|((buf)[2]<<16)|((buf)[1]<<8)|((buf)[0]&0xff))
+@@ -961,7 +994,7 @@ audio_file *open_output_audio_file(char *infile, wavegain_opt *opt)
+ #endif
+ 	}
+ 	else
+-		aufile->sndfile = fopen(infile, "wb");
++		aufile->sndfile = fmkstemp(infile);
+ 
+ 	if (aufile->sndfile == NULL) {
+ 		if (aufile)
+diff --git a/main.h b/main.h
+index ece9857..86c483f 100644
+--- a/main.h
++++ b/main.h
+@@ -5,7 +5,6 @@
+ #define WAVEGAIN_VERSION "1.3.1"
+ 
+ #define BUFFER_LEN  16384
+-#define TEMP_NAME "wavegain.tmp"
+ #define LOG_NAME "WGLog.txt"
+ 
+ #define NO_GAIN -10000.f
+diff --git a/wavegain.c b/wavegain.c
+index 773635e..97abc32 100644
+--- a/wavegain.c
++++ b/wavegain.c
+@@ -23,6 +23,13 @@
+ #include <time.h>
+ #include <ctype.h>
+ 
++#ifndef _WIN32
++/* For handling file attributes (owner, group, permissions) */
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <unistd.h>
++#endif
++
+ #ifdef _WIN32
+ #include <io.h>
+ #include <process.h>
+@@ -62,6 +69,10 @@
+ #define ROUND64(x)   ( doubletmp = (x) + Dither.Add + (Int64_t)0x001FFFFD80000000L, *(Int64_t*)(&doubletmp) - (Int64_t)0x433FFFFD80000000L )
+ #endif
+ 
++#ifndef _WIN32
++#define _snprintf snprintf
++#endif
++
+ extern int          write_to_log;
+ dither_t            Dither;
+ double              doubletmp;
+@@ -387,9 +398,11 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+ 	double       wrap_prev_neg;
+ 	void         *sample_buffer;
+ 	input_format *format;
+-	char         tempName[24] = "";
+-	unsigned int serial;
+-	char         tempSerial[7] = "";
++
++	char         template[] = ".tmp_XXXXXX";
++	int          tempSize = strlen(filename) + strlen(template) + 1;
++	char*        tempName = NULL;
++	struct stat  fst;
+ 
+ 	memset(wg_opts, 0, sizeof(wavegain_opt));
+ 
+@@ -521,22 +534,16 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+ 		wg_opts->std_out = settings->std_out;
+ 
+ 		/* Create temp file name */
+-                srand(time(NULL) ^ getpid());
+-		serial = rand();
+-#ifdef _WIN32
+-		sprintf(tempSerial,  "%d", serial);
+-		strcpy(tempName, TEMP_NAME);
+-		strcat(tempName, tempSerial);
+-#else
+-		snprintf(tempSerial, 6, "%d", serial);
+-		strncpy(tempName, TEMP_NAME, 17);
+-		printf("tempName=%s tempSerial=%s\n", tempName, tempSerial);
+-		strncat(tempName, tempSerial, 6);
+-#endif		
++		if ((tempName = malloc(tempSize * sizeof(*tempName))) == NULL) {
++			fprintf(stderr, " Error allocating memory for output file name\n");
++			goto exit;
++		}
++		_snprintf(tempName, tempSize, "%s%s", filename, template);
++
+ 		aufile = open_output_audio_file(tempName, wg_opts);
+ 
+ 		if (aufile == NULL) {
+-			fprintf (stderr, " Not able to open output file %s.\n", TEMP_NAME);
++			fprintf (stderr, " Not able to open output file %s.\n", tempName);
+ 			fclose(infile);
+ 			goto exit;
+ 		}
+@@ -655,11 +662,24 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+ 		fclose(infile);
+ 
+ 		if (!settings->std_out) {
++#ifdef _WIN32
++			/* WIN32's rename(temp, original) does not allow original to exist,
++			 * so we must remove() it first. Ideally, there should be a way
++			 * to remove+rename in a single, atomic function, so if either one
++			 * fails, the original file is preserved.
++			 */
+ 			if (remove(filename) != 0) {
+ 				fprintf(stderr, " Error deleting old file '%s'\n", filename);
+ 				goto exit;
+ 			}
+-    
++#endif
++#ifndef _WIN32
++			/* copy owner, group, permissions from original to output */
++			stat(filename, &fst);
++			chown(tempName, fst.st_uid, -1);
++			chown(tempName, -1 ,fst.st_gid);
++			chmod(tempName, fst.st_mode);
++#endif
+ 			if (rename(tempName, filename) != 0) {
+ 				fprintf(stderr, " Error renaming '%s' to '%s' (uh-oh)\n", tempName, filename);
+ 				goto exit;
+@@ -668,6 +688,7 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+ 		result = 1;
+ 	}
+ exit:
++	if(tempName) free(tempName);
+ 	return result;
+ }
+ 
