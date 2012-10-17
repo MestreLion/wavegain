@@ -1,0 +1,7 @@
+- Bugfix: percentages sometimes show > 100% done
+- Bugfix: investigate calculated RG gain when --gain and DC correction is used,
+   also how these are affected by --limiter, --noclip, etc
+- Fix --help linux issues (copyright at bottom, * ? as Wildcard)
+   if possible, make it convertable to nroff (man page) and/or html (manual),
+   so the 3 are always in sync
+- Standard license/copyright headers in all sources
