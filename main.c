@@ -437,7 +437,7 @@ static void usage(void)
 }
 
 
-const static struct option long_options[] = {
+static const struct option long_options[] = {
 	{"help",	0, NULL, 'h'},
 	{"album",	0, NULL, 'a'},
 	{"radio",	0, NULL, 'r'},
@@ -483,8 +483,10 @@ int main(int argc, char** argv)
 	         i,
 	         bits;
 
+#ifdef _WIN32
  	char     CmdDir[MAX_PATH];
  	char     *p;
+#endif
 
 	memset(&settings, 0, sizeof(settings));
 	settings.first_file = 1;
