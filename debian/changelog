@@ -1,5 +1,12 @@
 wavegain (1.3.1-1) unstable; urgency=low
 
-  * Initial release.
+  * Initial release. (Closes: #690738)
+  * debian/patches:
+    + add Makefile
+    + add README
+    + add doc/manual
+    + create output tempfile in a secure way and in same directory as original
+    + fix all GCC's default warnings, release now compiles cleanly
+    + fix several GCC -Wall warnings
 
- -- Rodrigo Silva <linux@rodrigosilva.com>  Fri, 05 Oct 2012 04:59:01 -0300
+ -- Rodrigo Silva <linux@rodrigosilva.com>  Wed, 17 Oct 2012 05:10:11 -0300
