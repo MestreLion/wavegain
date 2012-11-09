@@ -1,0 +1,2 @@
+# ignore eclipse project files
+extend-diff-ignore = "(.settings|.cproject|.project)"
