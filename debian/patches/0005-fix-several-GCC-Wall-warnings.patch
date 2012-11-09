@@ -1,4 +1,4 @@
-From 7aa6cd896b0c3ab62f6c35dd23b8a2fef4cdb396 Mon Sep 17 00:00:00 2001
+From b61b7ad387fbb8cba9759804df2b8419be28fa58 Mon Sep 17 00:00:00 2001
 From: MestreLion <linux@rodrigosilva.com>
 Date: Tue, 16 Oct 2012 21:30:15 -0300
 Subject: fix several GCC -Wall warnings

@@ -1,4 +1,4 @@
-From b245afab544fc8809ab3d5f6ade951d869b59ba7 Mon Sep 17 00:00:00 2001
+From b3a09c085a2dcf87dd121adec7ba5f7179ed4362 Mon Sep 17 00:00:00 2001
 From: MestreLion <linux@rodrigosilva.com>
 Date: Wed, 10 Oct 2012 08:46:13 -0300
 Subject: fix all GCC's default warnings, release now compiles cleanly

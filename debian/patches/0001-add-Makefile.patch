@@ -1,4 +1,4 @@
-From 9e22f121a62e7de0f5b778fe396bf6d807c8bd5d Mon Sep 17 00:00:00 2001
+From eea0f9e05e834bc287b9d28c286c5a9244724e3a Mon Sep 17 00:00:00 2001
 From: MestreLion <linux@rodrigosilva.com>
 Date: Fri, 5 Oct 2012 05:24:25 -0300
 Subject: add Makefile
@@ -19,7 +19,7 @@ sage for your changes. Lines starting
 
 diff --git a/Makefile b/Makefile
 new file mode 100644
-index 0000000..7f80b00
+index 0000000..2e60b31
 --- /dev/null
 +++ b/Makefile
 @@ -0,0 +1,35 @@
@@ -29,8 +29,8 @@ index 0000000..7f80b00
 +TARGET   = wavegain
 +DEFS     = -DHAVE_CONFIG_H
 +LIBS     = -lm
-+SOURCES  = $(shell echo *.c)
-+HEADERS  = $(shell echo *.h)
++SOURCES := $(wildcard *.c)
++HEADERS := $(wildcard *.h)
 +
 +prefix   = /usr/local
 +bindir   = $(prefix)/bin

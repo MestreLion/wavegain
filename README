@@ -89,7 +89,7 @@ Copyright owners in the source files.
 Originally released as LGPL-2.1 or later, although some source code simply says
 GPL, and some others some says GPL2+. Despite this, the project as a whole
 should be regarded as LGPL-2.1+, as per COPYING file. To avoid further confusion
-in the future, I suggested source files be standartized with a common header and
+in the future, I suggest source files be standartized with a common header and
 re-licensed, preferably as GPL-3 or later (not LGPL).
 
 I claim no copyright over the C source code, including patches I made.

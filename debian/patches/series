@@ -1,7 +1,7 @@
 0001-add-Makefile.patch
-0002-add-README.patch
-0003-add-manual.patch
-0004-create-output-tempfile-in-a-secure-way-and-in-same-d.patch
-0005-fix-all-GCC-s-default-warnings-release-now-compiles-.patch
-0006-fix-several-GCC-Wall-warnings.patch
-0007-add-TODO.patch
+0002-add-manual.patch
+0003-create-output-tempfile-in-a-secure-way-and-in-same-d.patch
+0004-fix-all-GCC-s-default-warnings-release-now-compiles-.patch
+0005-fix-several-GCC-Wall-warnings.patch
+0006-add-TODO.patch
+0007-add-README.patch

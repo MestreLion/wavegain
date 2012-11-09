@@ -4,8 +4,8 @@ CC       = gcc
 TARGET   = wavegain
 DEFS     = -DHAVE_CONFIG_H
 LIBS     = -lm
-SOURCES  = $(shell echo *.c)
-HEADERS  = $(shell echo *.h)
+SOURCES := $(wildcard *.c)
+HEADERS := $(wildcard *.h)
 
 prefix   = /usr/local
 bindir   = $(prefix)/bin

@@ -1,4 +1,4 @@
-From bb636146237618b874e5636d3320d8b43c239bdd Mon Sep 17 00:00:00 2001
+From ff61c84aa8720dc85bc6ad5d031f554231e3ca11 Mon Sep 17 00:00:00 2001
 From: MestreLion <linux@rodrigosilva.com>
 Date: Fri, 5 Oct 2012 05:25:12 -0300
 Subject: add README
@@ -10,7 +10,7 @@ Subject: add README
 
 diff --git a/README b/README
 new file mode 100644
-index 0000000..3b77fe0
+index 0000000..3235199
 --- /dev/null
 +++ b/README
 @@ -0,0 +1,179 @@
@@ -105,7 +105,7 @@ index 0000000..3b77fe0
 +Originally released as LGPL-2.1 or later, although some source code simply says
 +GPL, and some others some says GPL2+. Despite this, the project as a whole
 +should be regarded as LGPL-2.1+, as per COPYING file. To avoid further confusion
-+in the future, I suggested source files be standartized with a common header and
++in the future, I suggest source files be standartized with a common header and
 +re-licensed, preferably as GPL-3 or later (not LGPL).
 +
 +I claim no copyright over the C source code, including patches I made.
