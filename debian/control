@@ -1,7 +1,7 @@
 Source: wavegain
 Section: sound
 Priority: extra
-Maintainer: Rodrigo Silva <linux@rodrigosilva.com>
+Maintainer: Rodrigo Silva <debian@rodrigosilva.com>
 Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.3
 Homepage: http://www.rarewares.org/others.php
