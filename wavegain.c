@@ -34,14 +34,14 @@
 #include <io.h>
 #include <process.h>
 #else
-# ifndef __MACOSX__
+# ifndef __APPLE__
 #  include <sys/io.h>
 # endif
 #endif
 
 #include <fcntl.h>
 
-#ifndef __MACOSX__
+#ifndef __APPLE__
 #include <malloc.h>
 #endif
 
