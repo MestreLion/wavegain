@@ -107,7 +107,7 @@
 /* Define according to endianness of CPU - PC = LITTLE, APPLE/MAC = BIG, etc. */
 #define LITTLE                  0
 #define BIG                     1
-#ifdef __MACOSX__
+#ifdef __APPLE__
 # define machine_endianness      BIG
 #else
 # define machine_endianness      LITTLE
