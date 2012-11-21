@@ -35,14 +35,14 @@
 #ifdef _WIN32
 #include <io.h>
 #else
-# ifndef __MACOSX__
+# ifndef __APPLE__
 #  include <sys/io.h>
 # endif
 #endif
 
 #include <fcntl.h>
 
-#ifndef __MACOSX__
+#ifndef __APPLE__
 #include <malloc.h>
 #endif
 
@@ -100,7 +100,7 @@ FILE* fmkstemp(char *template) {
 #define READ_U16_BE(buf) \
 	(((buf)[0]<<8)|((buf)[1]&0xff))
 
-#ifdef __MACOSX__
+#ifdef __APPLE__
 	#define READ_D64	read_d64_be
 	#define WRITE_D64	write_d64_be
 #else
@@ -155,6 +155,7 @@ __inline long int lrint(double flt)
 
 	return intgr;
 }
+/* We're not touching this as we don't want these assembler routines on GHz Intel Core i7 */
 #elif (defined (__MACOSX__))
 #define lrint	double2int
 inline static long
@@ -841,7 +842,7 @@ long wav_read(void *in, double **buffer, int samples, int fast, int chunk)
 		}
 	}
 	else if (f->samplesize==16) {
-#ifdef __MACOSX__
+#ifdef __APPLE__
 		if (f->bigendian != machine_endianness) {
 #else
 		if (f->bigendian == machine_endianness) {
@@ -861,7 +862,7 @@ long wav_read(void *in, double **buffer, int samples, int fast, int chunk)
 		}
 	}
 	else if (f->samplesize == 24) {
-#ifdef __MACOSX__
+#ifdef __APPLE__
 		if (f->bigendian != machine_endianness) {
 #else
 		if (f->bigendian == machine_endianness) {
@@ -881,7 +882,7 @@ long wav_read(void *in, double **buffer, int samples, int fast, int chunk)
 		}
 	}
 	else if (f->samplesize == 32) {
-#ifdef __MACOSX__
+#ifdef __APPLE__
 		if (f->bigendian != machine_endianness) {
 #else
 		if (f->bigendian == machine_endianness) {
@@ -1354,7 +1355,7 @@ int write_audio_16bit(audio_file *aufile, void *sample_buffer, unsigned int samp
 
 	aufile->samples += samples;
 
-#ifdef __MACOSX__
+#ifdef __APPLE__
 		if (aufile->endianness != machine_endianness) {
 #else
 		if (aufile->endianness == machine_endianness) {
