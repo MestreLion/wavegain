@@ -136,7 +136,7 @@ void raw_close(void *);
 long wav_read(void *, double **buffer, int samples, int fast, int chunk);
 long wav_ieee_read(void *, double **buffer, int samples, int fast, int chunk);
 
-enum {
+enum file_formats {
 	WAV_NO_FMT = 0,
 	WAV_FMT_8BIT,
 	WAV_FMT_16BIT,
@@ -146,7 +146,7 @@ enum {
 	WAV_FMT_AIFF,
 	WAV_FMT_AIFC8,
 	WAV_FMT_AIFC16
-} file_formats;
+};
 
 typedef struct
 {
