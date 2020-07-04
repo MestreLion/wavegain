@@ -1,3 +1,6 @@
+- Consider generating a 32-bit binary instead of 64 using GCC's `-m32` flag.
+    Original binary was 32 bits, the convertion to 64 never had any proof-reading, 
+    and this might be the root cause of several bugs.
 - Bugfix: percentages sometimes show > 100% done
 - Bugfix: investigate calculated RG gain when --gain and DC correction is used,
    also how these are affected by --limiter, --noclip, etc
