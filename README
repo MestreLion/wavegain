@@ -61,8 +61,9 @@ compile and install from source. For both I assume you are already at the
 source directory (which is not the root directory of the cloned repository)
 
 Debian method:
+This is OUTDATED, UNMAINTANED and NON-WORKING! Use Traditional Method instead!
 $ sudo apt-get install devscripts # if you don't already have debuild
-$ debuild binary && sudo dpkg --install ../wavegain_*.deb
+$ debuild -- binary && sudo dpkg --install ../wavegain_*.deb
 
 Traditional method:
 $ make && sudo make install # by default installs to /usr/local/bin/wavegain
