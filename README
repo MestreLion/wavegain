@@ -69,6 +69,14 @@ $ make && sudo make install # by default installs to /usr/local/bin/wavegain
 or
 $ make && sudo make install prefix=/usr # to install to /usr/bin/wavegain
 
+Currently, 64-bit binaries build fine but can generate corrupted audio on output
+files, so to prevent this by default it builts a 32-bit executable instead,
+which runs and works fine on 64-bit architectures. However, multi-arch libraries
+and headers might be needed as a pre-requiste for compiling. On Debian/Ubuntu this
+can be installed by:
+
+	sudo apt install gcc-multilib
+
 
 Pre-compiled binaries and old versions
 -------------------------------------------------------------------------------
