@@ -509,7 +509,8 @@ int aiff_id(unsigned char *buf, int len)
 	return 1;
 }
 
-int aiff_open(FILE *in, wavegain_opt *opt, unsigned char *buf, int buflen)
+int aiff_open(FILE *in, wavegain_opt *opt, unsigned char *buf,
+              int buflen __attribute__((unused)))
 {
 	int aifc; /* AIFC or AIFF? */
 	unsigned int len;
@@ -636,7 +637,9 @@ int wav_id(unsigned char *buf, int len)
 	return 1;
 }
 
-int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
+int wav_open(FILE *in, wavegain_opt *opt,
+             unsigned char *oldbuf __attribute__((unused)),
+             int buflen __attribute__((unused)))
 {
 	unsigned char buf[81];
 	Int64_t len;
@@ -692,9 +695,10 @@ int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 		if (!find_gain_chunk(in, &len))
 			FSEEK64(in, current_pos, SEEK_SET);
 		else {
-			char buf_double[8];
+			unsigned char buf_double[8];
 			opt->gain_chunk = 1;
-			fread(buf_double, 1, 8, in);
+			if (fread(buf_double, 1, 8, in) < 8)
+				fprintf(stderr, "Warning: Failed to read WAV gain chunk\n");
 			opt->gain_scale = READ_D64(buf_double);
 		}
 	}
@@ -712,7 +716,8 @@ int wav_open(FILE *in, wavegain_opt *opt, unsigned char *oldbuf, int buflen)
 			fprintf(stderr, "Error: unable to allocate memory for header\n");
 		else {
 			opt->header_size = current_pos;
-			fread(opt->header, 1, opt->header_size, in);
+			if (fread(opt->header, 1, opt->header_size, in) < (size_t)opt->header_size)
+				fprintf(stderr, "Warning: Failed to read WAV header when applying gain\n");
 		}
 		FSEEK64(in, current_pos, SEEK_SET);
 	}
@@ -1065,7 +1070,8 @@ void close_audio_file( FILE *in, audio_file *aufile, wavegain_opt *opt)
 					FSEEK64 (in, current_pos_t, SEEK_SET);
 					ch = malloc (sizeof(char) * (pos - current_pos_t));
 
-					fread (ch, 1, pos - current_pos_t, in);
+					if (fread (ch, 1, pos - current_pos_t, in) < (pos - current_pos_t))
+						fprintf(stderr, "Warning: Failed to read input audio file when closing output file\n");
 					fwrite (ch, pos - current_pos_t, 1, aufile->sndfile);
 
 					if (ch)

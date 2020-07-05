@@ -96,7 +96,7 @@ static int contains_pattern(const char* string)
 			case '\\':
 				/* Accept a terminating \ as a literal \ */
 				if (string[1])
-					string++;
+					string++; // @suppress("No break at end of case")
 				/* Fall through */
 
 			default:
@@ -169,7 +169,7 @@ static int match(const char* pattern, const char* text)
 			case '\\':
 				/* Accept a terminating \ as a literal \ */
 				if (pattern[1])
-					++pattern;
+					++pattern; // @suppress("No break at end of case")
 				/* Fall through */
 
 			default:

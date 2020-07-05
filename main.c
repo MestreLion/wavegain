@@ -158,7 +158,7 @@ const char* ftos(double f, const char* format)
  * \return  0 if successful and -1 if an error occured (in which case a
  *          message has been printed).
  */
-int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir)
+int process_files(FILE_LIST* file_list, SETTINGS* settings, const char* dir __attribute__((unused)))
 {
 	FILE_LIST* file;
 	double     factor_clip,

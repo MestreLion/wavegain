@@ -381,7 +381,8 @@ exit:
  * If audiophile_gain is selected, that value is used, otherwise the
  * radio_gain value is used.
  */
-int write_gains(const char *filename, double radio_gain, double audiophile_gain, double TitlePeak, 
+int write_gains(const char *filename, double radio_gain, double audiophile_gain,
+                double TitlePeak __attribute__((unused)),
                 double *dc_offset, double *album_dc_offset, SETTINGS *settings)
 {
 	wavegain_opt *wg_opts = malloc(sizeof(wavegain_opt));
@@ -393,8 +394,8 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 	double       Gain;
 	double       scale;
 	double       total_read = 0.;
-	double       wrap_prev_pos;
-	double       wrap_prev_neg;
+	double       wrap_prev_pos = 0;
+	double       wrap_prev_neg = 0;
 	void         *sample_buffer;
 	input_format *format;
 
@@ -674,9 +675,16 @@ int write_gains(const char *filename, double radio_gain, double audiophile_gain,
 #endif
 #ifndef _WIN32
 			/* copy owner, group, permissions from original to output */
+			/* TODO: add -p|--preserve=[=ATTR_LIST] (see `man cp`) and only copy
+			 * attributes if enabled. Silently ignore errors on EPERM
+			 */
 			stat(filename, &fst);
-			chown(tempName, fst.st_uid, -1);
-			chown(tempName, -1 ,fst.st_gid);
+			if (
+				/* FIXME: Could/Should both calls be perfomed in a single step? */
+				chown(tempName, fst.st_uid, -1) != 0 ||
+				chown(tempName, -1 ,fst.st_gid) != 0
+			)
+				fprintf(stderr, "Warning: could not change file owner: %s (%s)\n", tempName, filename);
 			chmod(tempName, fst.st_mode);
 #endif
 			if (rename(tempName, filename) != 0) {
