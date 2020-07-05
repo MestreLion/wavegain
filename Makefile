@@ -30,6 +30,15 @@ debug: clean $(TARGET)
 release: CFLAGS += -s -O2 -D_FORTIFY_SOURCE=2
 release: clean $(TARGET)
 
+# ASAN (Address Sanitizer) build.
+# Find some run-time errors that debug build misses.
+# -U_FORTIFY_SOURCE: Disable FORTIFY_SOURCE, supposedly does not play well with ASAN
+# -fsanitize=address: enable ASAN
+# -fno-omit-frame-pointer: recommended to generate better stack traces on debugging
+# -static-libasan: needed on some platforms to avoid run-time errors without using LD_PRELOAD
+asan: CFLAGS += -g3 -O2 -U_FORTIFY_SOURCE -fsanitize=address -fno-omit-frame-pointer -static-libasan
+asan: clean $(TARGET)
+
 $(TARGET): $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(DEFS) -o $(TARGET) $(SOURCES) $(LIBS)
 
@@ -44,4 +53,4 @@ clean:
 
 distclean: clean
 
-.PHONY : all debug release install uninstall clean distclean
+.PHONY : all debug release asan install uninstall clean distclean
