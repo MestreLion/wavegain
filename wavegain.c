@@ -192,7 +192,8 @@ int get_gain(const char *filename, double *track_peak, double *track_gain,
 	}
 
 	if ((wg_opts->channels != 1) && (wg_opts->channels != 2)) {
-		fprintf(stderr, " Unsupported number of channels.\n");
+		fprintf(stderr, " Unsupported number of channels (%d) for %s.\n",
+				wg_opts->channels, filename);
 		goto exit;
 	}
 

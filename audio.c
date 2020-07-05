@@ -800,7 +800,9 @@ int wav_open(FILE *in, wavegain_opt *opt,
 							of trying to abstract stuff. */
 		wav->samplesize = format.samplesize;
 
-		if (len)
+		if (!format.channels)
+			opt->total_samples_per_channel = 0;
+		else if (len)
 			opt->total_samples_per_channel = len/(format.channels*samplesize);
 		else {
 			Int64_t pos;
