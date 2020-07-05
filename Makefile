@@ -2,6 +2,7 @@ SHELL    = /bin/sh
 CC       = gcc
 
 TARGET   = wavegain
+CFLAGS  += -m32
 DEFS     = -DHAVE_CONFIG_H
 LIBS     = -lm
 SOURCES := $(wildcard *.c)
