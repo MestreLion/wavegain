@@ -672,8 +672,17 @@ int wav_open(FILE *in, wavegain_opt *opt,
 	 * (40 bytes accommodates WAVEFORMATEXTENSIBLE conforming files.)
 	 */
 	if (len != 16 && len != 18 && len != 40)
-		fprintf(stderr, "Warning: INVALID format chunk in wav header.\n"
+		fprintf(stderr, "Warning: INVALID format chunk in WAV header.\n"
 				" Trying to read anyway (may not work)...\n");
+
+	/* Prevent buffer overflow in invalid / malicious files
+	 */
+	if (len > sizeof(buf)) {
+		fprintf(stderr, "Warning: format chunk size (%lld) in WAV header"
+				" is larger than permitted (%d).\n",
+				len, sizeof(buf));
+		len = sizeof(buf);
+	}
 
 	/* Deal with stupid broken apps. Don't use these programs.
 	 */
